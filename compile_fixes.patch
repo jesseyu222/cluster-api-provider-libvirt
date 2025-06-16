@@ -1,0 +1,105 @@
+--- a/api/v1beta1/constants.go
++++ b/api/v1beta1/constants.go
++package v1beta1
++
++// Common finalizer strings reused across the provider.
++const (
++    MachineFinalizer = "libvirtmachine.infrastructure.libvirt.io/finalizer"
++    ClusterFinalizer = "libvirtcluster.infrastructure.libvirt.io/finalizer"
++)
++
+--- a/api/v1beta1/libvirtmachine_types.go
++++ b/api/v1beta1/libvirtmachine_types.go
+@@
+-package controller
++package v1beta1
+@@
+-import somethingBroken "github.com/example/broken"
++// (移除不存在的 import，保持 metav1 / clusterv1)
+@@
+ type LibvirtMachineStatus struct {
+     Ready bool `json:"ready,omitempty"`
+-    Addresses []string `json:"addresses,omitempty"`
++    Addresses []clusterv1.MachineAddress `json:"addresses,omitempty"`
+     InstanceState *string `json:"instanceState,omitempty"`
+ }
++
+--- a/api/v1beta1/libvirtcluster_types.go
++++ b/api/v1beta1/libvirtcluster_types.go
+@@
+-package controller
++package v1beta1
+@@
+-import UnknownType xyz
++import (
++    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
++    clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
++)
+@@
+-type LibvirtClusterStatus struct {
+-    Ready somethingInvalid `json:"ready"`
+-}
++type LibvirtClusterStatus struct {
++    Ready bool   `json:"ready,omitempty"`
++    FailureMessage *string `json:"failureMessage,omitempty"`
++}
++
+--- a/api/v1beta1/libvirtmachinetemplate_types.go
++++ b/api/v1beta1/libvirtmachinetemplate_types.go
+@@
+-package controller
++package v1beta1
+@@
+-import (
+-    broken "k8s.io/broken"
+-)
++import (
++    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
++)
+@@
+-type LibvirtMachineTemplateSpec struct {
+-    InvalidField int
+-}
++type LibvirtMachineTemplateSpec struct {
++    Template LibvirtMachineTemplateResource `json:"template"`
++}
++
+ type LibvirtMachineTemplateResource struct {
+     metav1.ObjectMeta `json:"metadata,omitempty"`
+-    Spec Unknown `json:"spec,omitempty"`
++    Spec LibvirtMachineSpec `json:"spec,omitempty"`
+ }
++
+--- a/internal/controller/libvirtmachine_controller.go
++++ b/internal/controller/libvirtmachine_controller.go
+@@
+-import (
+-    ... old imports ...
+-    handler "sigs.k8s.io/controller-runtime/pkg/handler"
+-    source "sigs.k8s.io/controller-runtime/pkg/source"
+-    record "k8s.io/client-go/tools/record"
+-)
++import (
++    context "context"
++    time "time"
++    runtime "k8s.io/apimachinery/pkg/runtime"
++    ctrl "sigs.k8s.io/controller-runtime"
++    controller "sigs.k8s.io/controller-runtime/pkg/controller"
++    controllerutil "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
++    client "sigs.k8s.io/controller-runtime/pkg/client"
++    util "sigs.k8s.io/cluster-api/util"
++    annotations "sigs.k8s.io/cluster-api/util/annotations"
++    clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
++    infrav1 "github.com/jesseyu222/cluster-api-provider-libvirt/api/v1beta1"
++)
+@@
+-        Owns(&corev1.Secret{}).
+-        Watches(
+-            &source.Kind{Type: &clusterv1.Cluster{}},
+-            handler.EnqueueRequestsFromMapFunc(util.ClusterToInfrastructureMapFunc(infrav1.GroupVersion.WithKind("LibvirtMachine"))),
+-        ).
+-        Watches(
+-            &source.Kind{Type: &clusterv1.Machine{}},
+-            handler.EnqueueRequestsFromMapFunc(util.MachineToInfrastructureMapFunc(infrav1.GroupVersion.WithKind("LibvirtMachine"))),
+-        ).
++        // Watches for Cluster / Machine can be re‑enabled once upgraded to new signature

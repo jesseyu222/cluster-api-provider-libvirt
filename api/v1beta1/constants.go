@@ -1,19 +1,14 @@
 // api/v1beta1/constants.go
 package v1beta1
 
+// Finalizer strings reused across the provider.
 const (
-    // ClusterFinalizer 集群finalizer
-    ClusterFinalizer = "libvirtcluster.infrastructure.libvirt.io"
-    
-    // MachineFinalizer 虚拟机finalizer  
-    MachineFinalizer = "libvirtmachine.infrastructure.libvirt.io"
+	MachineFinalizer = "libvirtmachine.infrastructure.libvirt.io/finalizer"
+	ClusterFinalizer = "libvirtcluster.infrastructure.libvirt.io/finalizer"
 )
 
-// Condition types
+// Condition types.
 const (
-    // NetworkReadyCondition 网络就绪条件
-    NetworkReadyCondition = "NetworkReady"
-    
-    // VMReadyCondition 虚拟机就绪条件
-    VMReadyCondition = "VMReady"
+	VMReadyCondition      = "VMReady"
+	NetworkReadyCondition = "NetworkReady"
 )

@@ -6,48 +6,78 @@ import (
     clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
-// LibvirtMachineSpec defines the desired state of LibvirtMachine
+// -----------------------------------------------------------------------------
+// Spec
+// -----------------------------------------------------------------------------
+
+// LibvirtMachineSpec describes the desired state of a libvirt‑backed virtual
+// machine.
 type LibvirtMachineSpec struct {
-    // ProviderID will be the libvirt instance's ID in ProviderID format (e.g., libvirt://<UUID>).
+    // ProviderID is the domain UUID expressed in ProviderID format, e.g.
+    //   libvirt://<uuid>
     // +optional
     ProviderID *string `json:"providerID,omitempty"`
 
-    // Image is the path or name of the VM base image to use.
+    // Image identifies the base image that should be used. It can be a local
+    // path, URL, or a short name resolvable by the reconciler.
     Image string `json:"image"`
 
-    // NumCPU and MemoryMB define the VM hardware specs.
-    NumCPU   int32 `json:"numCPU,omitempty"`
+    // NumCPU is the number of virtual CPUs assigned to the guest.
+    // +kubebuilder:default:=2
+    // +optional
+    NumCPU int32 `json:"numCPU,omitempty"`
+
+    // MemoryMB is the amount of RAM, in MiB, assigned to the guest.
+    // +kubebuilder:default:=2048
+    // +optional
     MemoryMB int32 `json:"memoryMB,omitempty"`
 
+    // CloudInit contains user‑data and network‑data that will be injected via
+    // cloud‑init.
+    // +optional
+    CloudInit *LibvirtCloudInitSpec `json:"cloudInit,omitempty"`
 }
 
-
-
+// LibvirtCloudInitSpec bundles base64‑encoded cloud‑init payloads.
 type LibvirtCloudInitSpec struct {
-    // UserData base64编码的用户数据
+    // UserData is the cloud‑init user‑data payload.
+    // +optional
     UserData string `json:"userData,omitempty"`
-    
-    // NetworkData base64编码的网络数据
+
+    // NetworkData is the cloud‑init network‑data payload.
+    // +optional
     NetworkData string `json:"networkData,omitempty"`
 }
 
-// LibvirtMachineStatus defines the observed state of LibvirtMachine
+// -----------------------------------------------------------------------------
+// Status
+// -----------------------------------------------------------------------------
+
+// LibvirtMachineStatus captures the observed state of the VM.
 type LibvirtMachineStatus struct {
-    // Ready indicates the VM has been created and is operational.
+    // Ready is true when the domain has been created and is running.
     Ready bool `json:"ready,omitempty"`
 
-    // Addresses contains the associated addresses for the machine (e.g., IPs).
+    // Addresses lists IP addresses associated with the VM.
     // +optional
     Addresses []clusterv1.MachineAddress `json:"addresses,omitempty"`
+    // InstanceState holds current libvirt domain state.
+    // +optional
+    InstanceState *string `json:"instanceState,omitempty"`
 }
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
-//+kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name"
-//+kubebuilder:printcolumn:name="Machine",type="string",JSONPath=".metadata.ownerReferences[?(@.kind==\"Machine\")].name"
-//+kubebuilder:printcolumn:name="State",type="string",JSONPath=".status.instanceState"
-//+kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready"
 
-// LibvirtMachine is the Schema for the libvirtmachines API  
+// -----------------------------------------------------------------------------
+// +kubebuilder markers
+// -----------------------------------------------------------------------------
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name"
+// +kubebuilder:printcolumn:name="Machine",type="string",JSONPath=".metadata.ownerReferences[?(@.kind==\"Machine\")].name"
+// +kubebuilder:printcolumn:name="State",type="string",JSONPath=".status.instanceState"
+// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready"
+
+// LibvirtMachine is the root API object representing a libvirt‑backed
+// Cluster‑API Machine.
 type LibvirtMachine struct {
     metav1.TypeMeta   `json:",inline"`
     metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -58,10 +88,9 @@ type LibvirtMachine struct {
 
 //+kubebuilder:object:root=true
 
-// LibvirtMachineList contains a list of LibvirtMachine
+// LibvirtMachineList contains a list of LibvirtMachine objects.
 type LibvirtMachineList struct {
     metav1.TypeMeta `json:",inline"`
     metav1.ListMeta `json:"metadata,omitempty"`
     Items           []LibvirtMachine `json:"items"`
 }
-
