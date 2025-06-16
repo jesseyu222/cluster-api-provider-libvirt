@@ -24,7 +24,6 @@ spec:
     name: v1beta1
     schema:
       openAPIV3Schema:
-        description: LibvirtCluster is the Schema for the libvirtclusters API
         properties:
           apiVersion:
             description: |-
@@ -44,10 +43,9 @@ spec:
           metadata:
             type: object
           spec:
-            description: LibvirtClusterSpec defines the desired state of LibvirtCluster
             properties:
               controlPlaneEndpoint:
-                description: URI是libvirt连接URI
+                description: APIEndpoint represents a reachable Kubernetes API endpoint.
                 properties:
                   host:
                     description: host is the hostname on which the API server is serving.
@@ -61,9 +59,12 @@ spec:
                 - host
                 - port
                 type: object
+              network:
+                type: string
+              uri:
+                type: string
             type: object
           status:
-            description: LibvirtClusterStatus defines the observed state of LibvirtCluster
             properties:
               failureMessage:
                 type: string

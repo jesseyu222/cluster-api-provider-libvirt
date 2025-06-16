@@ -46,22 +46,44 @@ spec:
                   metadata:
                     type: object
                   spec:
-                    description: LibvirtMachineSpec defines the desired state of LibvirtMachine
+                    description: |-
+                      LibvirtMachineSpec describes the desired state of a libvirt‑backed virtual
+                      machine.
                     properties:
+                      cloudInit:
+                        description: |-
+                          CloudInit contains user‑data and network‑data that will be injected via
+                          cloud‑init.
+                        properties:
+                          networkData:
+                            description: NetworkData is the cloud‑init network‑data
+                              payload.
+                            type: string
+                          userData:
+                            description: UserData is the cloud‑init user‑data payload.
+                            type: string
+                        type: object
                       image:
-                        description: Image is the path or name of the VM base image
-                          to use.
+                        description: |-
+                          Image identifies the base image that should be used. It can be a local
+                          path, URL, or a short name resolvable by the reconciler.
                         type: string
                       memoryMB:
+                        default: 2048
+                        description: MemoryMB is the amount of RAM, in MiB, assigned
+                          to the guest.
                         format: int32
                         type: integer
                       numCPU:
-                        description: NumCPU and MemoryMB define the VM hardware specs.
+                        default: 2
+                        description: NumCPU is the number of virtual CPUs assigned
+                          to the guest.
                         format: int32
                         type: integer
                       providerID:
-                        description: ProviderID will be the libvirt instance's ID
-                          in ProviderID format (e.g., libvirt://<UUID>).
+                        description: |-
+                          ProviderID is the domain UUID expressed in ProviderID format, e.g.
+                            libvirt://<uuid>
                         type: string
                     required:
                     - image
