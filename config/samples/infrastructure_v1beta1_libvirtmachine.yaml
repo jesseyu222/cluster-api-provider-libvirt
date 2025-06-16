@@ -1,0 +1,9 @@
+apiVersion: infrastructure.libvirt.io/v1beta1
+kind: LibvirtMachine
+metadata:
+  labels:
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+    app.kubernetes.io/managed-by: kustomize
+  name: libvirtmachine-sample
+spec:
+  # TODO(user): Add fields here
