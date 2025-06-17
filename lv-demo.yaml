@@ -27,7 +27,7 @@ metadata:
   namespace: default
 spec:
   network: default
-  uri: qemu+tcp://192.168.122.1/system
+  uri: qemu:///system
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: LibvirtMachineTemplate
@@ -41,3 +41,42 @@ spec:
       image: http://192.168.122.1/images/ubuntu-22.04.qcow2
       memoryMiB: 2048
       network: default
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: LibvirtMachineTemplate
+metadata:
+  name: lv-demo-md-0
+  namespace: default
+spec:
+  template:
+    spec:
+      cpu: 2
+      image: http://192.168.122.1/images/ubuntu-22.04.qcow2
+      memoryMiB: 2048
+      network: default
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: lv-demo-md-0
+  namespace: default
+spec:
+  clusterName: lv-demo
+  replicas: 3
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: lv-demo
+      node-role.kubernetes.io/worker: ""
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: lv-demo
+        node-role.kubernetes.io/worker: ""
+    spec:
+      bootstrap:
+        dataSecretName: ""
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: LibvirtMachineTemplate
+        name: lv-demo-md-0
+      version: v1.30.2

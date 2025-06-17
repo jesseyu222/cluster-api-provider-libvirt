@@ -1,0 +1,76 @@
+# 固定值範例：lv-demo, 1 CP, 3 Worker
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: lv-demo
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  controlPlaneRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: LibvirtMachineTemplate
+    name: lv-demo-control-plane
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: LibvirtCluster
+    name: lv-demo
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: LibvirtCluster
+metadata:
+  name: lv-demo
+spec:
+  uri: qemu:///system
+  network: default
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: LibvirtMachineTemplate
+metadata:
+  name: lv-demo-control-plane
+spec:
+  template:
+    spec:
+      image: http://192.168.122.1/images/ubuntu-22.04.qcow2
+      cpu: 2
+      memoryMiB: 2048
+      network: default
+---
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: LibvirtMachineTemplate
+metadata:
+  name: lv-demo-md-0
+spec:
+  template:
+    spec:
+      image: http://192.168.122.1/images/ubuntu-22.04.qcow2
+      cpu: 2
+      memoryMiB: 2048
+      network: default
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineDeployment
+metadata:
+  name: lv-demo-md-0
+spec:
+  clusterName: lv-demo
+  replicas: 3
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/cluster-name: lv-demo
+      node-role.kubernetes.io/worker: ""
+  template:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: lv-demo
+        node-role.kubernetes.io/worker: ""
+    spec:
+      version: v1.30.2
+      bootstrap:
+        dataSecretName: ""
+      infrastructureRef:
+        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        kind: LibvirtMachineTemplate
+        name: lv-demo-md-0
