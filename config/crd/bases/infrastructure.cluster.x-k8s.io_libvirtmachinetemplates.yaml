@@ -4,15 +4,17 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: libvirtmachinetemplates.infrastructure.libvirt.io
+  name: libvirtmachinetemplates.infrastructure.cluster.x-k8s.io
 spec:
-  group: infrastructure.libvirt.io
+  group: infrastructure.cluster.x-k8s.io
   names:
     categories:
     - cluster-api
     kind: LibvirtMachineTemplate
     listKind: LibvirtMachineTemplateList
     plural: libvirtmachinetemplates
+    shortNames:
+    - lvmachinetpl
     singular: libvirtmachinetemplate
   scope: Namespaced
   versions:
@@ -38,55 +40,43 @@ spec:
           metadata:
             type: object
           spec:
+            description: LibvirtMachineTemplateSpec describes the template.
             properties:
               template:
-                description: LibvirtMachineTemplateResource defines the spec for the
-                  MachineTemplate's Machine.
+                description: LibvirtMachineTemplateResource holds metadata + spec
+                  for Machines.
                 properties:
                   metadata:
                     type: object
                   spec:
-                    description: |-
-                      LibvirtMachineSpec describes the desired state of a libvirt‑backed virtual
-                      machine.
+                    description: LibvirtMachineSpec defines the desired state of a
+                      Libvirt virtual machine.
                     properties:
-                      cloudInit:
-                        description: |-
-                          CloudInit contains user‑data and network‑data that will be injected via
-                          cloud‑init.
-                        properties:
-                          networkData:
-                            description: NetworkData is the cloud‑init network‑data
-                              payload.
-                            type: string
-                          userData:
-                            description: UserData is the cloud‑init user‑data payload.
-                            type: string
-                        type: object
-                      image:
-                        description: |-
-                          Image identifies the base image that should be used. It can be a local
-                          path, URL, or a short name resolvable by the reconciler.
+                      cloudInitSecret:
+                        description: CloudInitSecret is a secret name containing user‑data.
                         type: string
-                      memoryMB:
-                        default: 2048
-                        description: MemoryMB is the amount of RAM, in MiB, assigned
-                          to the guest.
-                        format: int32
-                        type: integer
-                      numCPU:
+                      cpu:
                         default: 2
-                        description: NumCPU is the number of virtual CPUs assigned
-                          to the guest.
+                        description: CPU is the number of vCPUs.
                         format: int32
+                        minimum: 1
                         type: integer
-                      providerID:
-                        description: |-
-                          ProviderID is the domain UUID expressed in ProviderID format, e.g.
-                            libvirt://<uuid>
+                      image:
+                        description: Image is the QCOW2/RAW image to boot from.
                         type: string
-                    required:
-                    - image
+                      memoryMiB:
+                        default: 2048
+                        description: MemoryMiB is RAM in MiB.
+                        format: int32
+                        minimum: 512
+                        type: integer
+                      network:
+                        description: Network is the libvirt network name to attach.
+                        type: string
+                      providerID:
+                        description: 'ProviderID encodes the libvirt domain UUID.
+                          Format: libvirt://<uuid>'
+                        type: string
                     type: object
                 type: object
             required:
@@ -95,3 +85,5 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}

@@ -12,24 +12,21 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: libvirtclusters.infrastructure.libvirt.io
+  name: libvirtclusters.infrastructure.cluster.x-k8s.io
 spec:
-  group: infrastructure.libvirt.io
+  group: infrastructure.cluster.x-k8s.io
   names:
+    categories:
+    - cluster-api
     kind: LibvirtCluster
     listKind: LibvirtClusterList
     plural: libvirtclusters
+    shortNames:
+    - lvcluster
     singular: libvirtcluster
   scope: Namespaced
   versions:
-  - additionalPrinterColumns:
-    - jsonPath: .metadata.labels.cluster\.x-k8s\.io/cluster-name
-      name: Cluster
-      type: string
-    - jsonPath: .status.ready
-      name: Ready
-      type: string
-    name: v1beta1
+  - name: v1beta1
     schema:
       openAPIV3Schema:
         properties:
@@ -51,9 +48,12 @@ spec:
           metadata:
             type: object
           spec:
+            description: LibvirtClusterSpec defines the desired state of LibvirtCluster.
             properties:
               controlPlaneEndpoint:
-                description: APIEndpoint represents a reachable Kubernetes API endpoint.
+                description: |-
+                  ControlPlaneEndpoint is the endpoint used to communicate with the
+                  control plane.
                 properties:
                   host:
                     description: host is the hostname on which the API server is serving.
@@ -68,16 +68,81 @@ spec:
                 - port
                 type: object
               network:
+                description: |-
+                  Network references the Libvirt network to which the cluster’s machines
+                  should be attached.
+                minLength: 1
                 type: string
               uri:
+                description: |-
+                  URI is the Libvirt driver URI (e.g., qemu+tcp://192.168.122.1/system)
+                  that the controller will connect to.
+                minLength: 1
                 type: string
             type: object
           status:
+            description: LibvirtClusterStatus defines the observed state of LibvirtCluster.
             properties:
+              conditions:
+                description: Conditions defines the current service state of the LibvirtCluster.
+                items:
+                  description: Condition defines an observation of a Cluster API resource
+                    operational state.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
+                      type: string
+                    reason:
+                      description: |-
+                        reason is the reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may be empty.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                    severity:
+                      description: |-
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
+                      maxLength: 32
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - status
+                  - type
+                  type: object
+                type: array
               failureMessage:
+                description: FailureMessage indicates terminal errors from the controller.
                 type: string
               ready:
+                description: Ready indicates the cluster infrastructure is ready.
                 type: boolean
+            required:
+            - ready
             type: object
         type: object
     served: true
@@ -90,35 +155,23 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: libvirtmachines.infrastructure.libvirt.io
+  name: libvirtmachines.infrastructure.cluster.x-k8s.io
 spec:
-  group: infrastructure.libvirt.io
+  group: infrastructure.cluster.x-k8s.io
   names:
+    categories:
+    - cluster-api
     kind: LibvirtMachine
     listKind: LibvirtMachineList
     plural: libvirtmachines
+    shortNames:
+    - lvmachine
     singular: libvirtmachine
   scope: Namespaced
   versions:
-  - additionalPrinterColumns:
-    - jsonPath: .metadata.labels.cluster\.x-k8s\.io/cluster-name
-      name: Cluster
-      type: string
-    - jsonPath: .metadata.ownerReferences[?(@.kind=="Machine")].name
-      name: Machine
-      type: string
-    - jsonPath: .status.instanceState
-      name: State
-      type: string
-    - jsonPath: .status.ready
-      name: Ready
-      type: string
-    name: v1beta1
+  - name: v1beta1
     schema:
       openAPIV3Schema:
-        description: |-
-          LibvirtMachine is the root API object representing a libvirt‑backed
-          Cluster‑API Machine.
         properties:
           apiVersion:
             description: |-
@@ -138,52 +191,39 @@ spec:
           metadata:
             type: object
           spec:
-            description: |-
-              LibvirtMachineSpec describes the desired state of a libvirt‑backed virtual
-              machine.
+            description: LibvirtMachineSpec defines the desired state of a Libvirt
+              virtual machine.
             properties:
-              cloudInit:
-                description: |-
-                  CloudInit contains user‑data and network‑data that will be injected via
-                  cloud‑init.
-                properties:
-                  networkData:
-                    description: NetworkData is the cloud‑init network‑data payload.
-                    type: string
-                  userData:
-                    description: UserData is the cloud‑init user‑data payload.
-                    type: string
-                type: object
-              image:
-                description: |-
-                  Image identifies the base image that should be used. It can be a local
-                  path, URL, or a short name resolvable by the reconciler.
+              cloudInitSecret:
+                description: CloudInitSecret is a secret name containing user‑data.
                 type: string
-              memoryMB:
-                default: 2048
-                description: MemoryMB is the amount of RAM, in MiB, assigned to the
-                  guest.
-                format: int32
-                type: integer
-              numCPU:
+              cpu:
                 default: 2
-                description: NumCPU is the number of virtual CPUs assigned to the
-                  guest.
+                description: CPU is the number of vCPUs.
                 format: int32
+                minimum: 1
                 type: integer
-              providerID:
-                description: |-
-                  ProviderID is the domain UUID expressed in ProviderID format, e.g.
-                    libvirt://<uuid>
+              image:
+                description: Image is the QCOW2/RAW image to boot from.
                 type: string
-            required:
-            - image
+              memoryMiB:
+                default: 2048
+                description: MemoryMiB is RAM in MiB.
+                format: int32
+                minimum: 512
+                type: integer
+              network:
+                description: Network is the libvirt network name to attach.
+                type: string
+              providerID:
+                description: 'ProviderID encodes the libvirt domain UUID. Format:
+                  libvirt://<uuid>'
+                type: string
             type: object
           status:
-            description: LibvirtMachineStatus captures the observed state of the VM.
             properties:
               addresses:
-                description: Addresses lists IP addresses associated with the VM.
+                description: Addresses are IPs assigned to the VM.
                 items:
                   description: MachineAddress contains information for the node's
                     address.
@@ -208,13 +248,68 @@ spec:
                   - type
                   type: object
                 type: array
-              instanceState:
-                description: InstanceState holds current libvirt domain state.
+              conditions:
+                description: Conditions standard CAPI conditions.
+                items:
+                  description: Condition defines an observation of a Cluster API resource
+                    operational state.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
+                      type: string
+                    reason:
+                      description: |-
+                        reason is the reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may be empty.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                    severity:
+                      description: |-
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
+                      maxLength: 32
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - status
+                  - type
+                  type: object
+                type: array
+              failureMessage:
+                description: FailureMessage is a human‑readable error.
+                type: string
+              failureReason:
+                description: FailureReason is set on terminal errors.
                 type: string
               ready:
-                description: Ready is true when the domain has been created and is
-                  running.
                 type: boolean
+            required:
+            - ready
             type: object
         type: object
     served: true
@@ -227,15 +322,17 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: libvirtmachinetemplates.infrastructure.libvirt.io
+  name: libvirtmachinetemplates.infrastructure.cluster.x-k8s.io
 spec:
-  group: infrastructure.libvirt.io
+  group: infrastructure.cluster.x-k8s.io
   names:
     categories:
     - cluster-api
     kind: LibvirtMachineTemplate
     listKind: LibvirtMachineTemplateList
     plural: libvirtmachinetemplates
+    shortNames:
+    - lvmachinetpl
     singular: libvirtmachinetemplate
   scope: Namespaced
   versions:
@@ -261,55 +358,43 @@ spec:
           metadata:
             type: object
           spec:
+            description: LibvirtMachineTemplateSpec describes the template.
             properties:
               template:
-                description: LibvirtMachineTemplateResource defines the spec for the
-                  MachineTemplate's Machine.
+                description: LibvirtMachineTemplateResource holds metadata + spec
+                  for Machines.
                 properties:
                   metadata:
                     type: object
                   spec:
-                    description: |-
-                      LibvirtMachineSpec describes the desired state of a libvirt‑backed virtual
-                      machine.
+                    description: LibvirtMachineSpec defines the desired state of a
+                      Libvirt virtual machine.
                     properties:
-                      cloudInit:
-                        description: |-
-                          CloudInit contains user‑data and network‑data that will be injected via
-                          cloud‑init.
-                        properties:
-                          networkData:
-                            description: NetworkData is the cloud‑init network‑data
-                              payload.
-                            type: string
-                          userData:
-                            description: UserData is the cloud‑init user‑data payload.
-                            type: string
-                        type: object
-                      image:
-                        description: |-
-                          Image identifies the base image that should be used. It can be a local
-                          path, URL, or a short name resolvable by the reconciler.
+                      cloudInitSecret:
+                        description: CloudInitSecret is a secret name containing user‑data.
                         type: string
-                      memoryMB:
-                        default: 2048
-                        description: MemoryMB is the amount of RAM, in MiB, assigned
-                          to the guest.
-                        format: int32
-                        type: integer
-                      numCPU:
+                      cpu:
                         default: 2
-                        description: NumCPU is the number of virtual CPUs assigned
-                          to the guest.
+                        description: CPU is the number of vCPUs.
                         format: int32
+                        minimum: 1
                         type: integer
-                      providerID:
-                        description: |-
-                          ProviderID is the domain UUID expressed in ProviderID format, e.g.
-                            libvirt://<uuid>
+                      image:
+                        description: Image is the QCOW2/RAW image to boot from.
                         type: string
-                    required:
-                    - image
+                      memoryMiB:
+                        default: 2048
+                        description: MemoryMiB is RAM in MiB.
+                        format: int32
+                        minimum: 512
+                        type: integer
+                      network:
+                        description: Network is the libvirt network name to attach.
+                        type: string
+                      providerID:
+                        description: 'ProviderID encodes the libvirt domain UUID.
+                          Format: libvirt://<uuid>'
+                        type: string
                     type: object
                 type: object
             required:
@@ -318,6 +403,8 @@ spec:
         type: object
     served: true
     storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -753,7 +840,7 @@ spec:
         - --health-probe-bind-address=:8081
         command:
         - /manager
-        image: controller:latest
+        image: docker.io/jesseyu222/cluster-api-provider-libvirt:v0.1.1
         livenessProbe:
           httpGet:
             path: /healthz

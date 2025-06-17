@@ -1,258 +1,207 @@
-/*
-Copyright 2025.
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
+// SPDX-License-Identifier: Apache-2.0
+// Copyright 2025.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 package main
 
 import (
-	"crypto/tls"
-	"flag"
-	"os"
-	"path/filepath"
+    "crypto/tls"
+    "flag"
+    "os"
+    "path/filepath"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
+    _ "k8s.io/client-go/plugin/pkg/client/auth" // auth providers
 
-	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
-	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
-	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
+    "k8s.io/apimachinery/pkg/runtime"
+    utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+    clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+    ctrl "sigs.k8s.io/controller-runtime"
+    "sigs.k8s.io/controller-runtime/pkg/certwatcher"
+    "sigs.k8s.io/controller-runtime/pkg/healthz"
+    "sigs.k8s.io/controller-runtime/pkg/log/zap"
+    "sigs.k8s.io/controller-runtime/pkg/metrics/filters"
+    metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+    "sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	infrastructurev1beta1 "github.com/jesseyu222/cluster-api-provider-libvirt/api/v1beta1"
-	"github.com/jesseyu222/cluster-api-provider-libvirt/internal/controller"
-	// +kubebuilder:scaffold:imports
+    // Cluster API core types (Cluster/Machine, etc.)
+    clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+
+    // Provider API types
+    infrav1 "github.com/jesseyu222/cluster-api-provider-libvirt/api/v1beta1"
+
+    // Provider controllers
+    "github.com/jesseyu222/cluster-api-provider-libvirt/internal/controller"
+    // +kubebuilder:scaffold:imports
 )
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+    scheme   = runtime.NewScheme()
+    setupLog = ctrl.Log.WithName("setup")
 )
 
 func init() {
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+    // Kubernetes built‑in types
+    utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(infrastructurev1beta1.AddToScheme(scheme))
-	// +kubebuilder:scaffold:scheme
+    // Cluster API core contract (v1beta1)
+    utilruntime.Must(clusterv1.AddToScheme(scheme))
+
+    // Provider’s own API
+    utilruntime.Must(infrav1.AddToScheme(scheme))
+
+    // +kubebuilder:scaffold:scheme
 }
 
-// nolint:gocyclo
-func main() {
-	var metricsAddr string
-	var metricsCertPath, metricsCertName, metricsCertKey string
-	var webhookCertPath, webhookCertName, webhookCertKey string
-	var enableLeaderElection bool
-	var probeAddr string
-	var secureMetrics bool
-	var enableHTTP2 bool
-	var tlsOpts []func(*tls.Config)
-	flag.StringVar(&metricsAddr, "metrics-bind-address", "0", "The address the metrics endpoint binds to. "+
-		"Use :8443 for HTTPS or :8080 for HTTP, or leave as 0 to disable the metrics service.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
-	flag.BoolVar(&secureMetrics, "metrics-secure", true,
-		"If set, the metrics endpoint is served securely via HTTPS. Use --metrics-secure=false to use HTTP instead.")
-	flag.StringVar(&webhookCertPath, "webhook-cert-path", "", "The directory that contains the webhook certificate.")
-	flag.StringVar(&webhookCertName, "webhook-cert-name", "tls.crt", "The name of the webhook certificate file.")
-	flag.StringVar(&webhookCertKey, "webhook-cert-key", "tls.key", "The name of the webhook key file.")
-	flag.StringVar(&metricsCertPath, "metrics-cert-path", "",
-		"The directory that contains the metrics server certificate.")
-	flag.StringVar(&metricsCertName, "metrics-cert-name", "tls.crt", "The name of the metrics server certificate file.")
-	flag.StringVar(&metricsCertKey, "metrics-cert-key", "tls.key", "The name of the metrics server key file.")
-	flag.BoolVar(&enableHTTP2, "enable-http2", false,
-		"If set, HTTP/2 will be enabled for the metrics and webhook servers")
-	opts := zap.Options{
-		Development: true,
-	}
-	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
+func main() { //nolint:gocyclo
+    var (
+        metricsAddr                                               string
+        metricsCertPath, metricsCertName, metricsCertKey          string
+        webhookCertPath, webhookCertName, webhookCertKey          string
+        enableLeaderElection, secureMetrics, enableHTTP2          bool
+        probeAddr                                                 string
+        tlsOpts                                                   []func(*tls.Config)
+    )
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+    flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metrics endpoint binds to (':8080' for HTTP, ':8443' for HTTPS, '0' to disable)")
+    flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+    flag.BoolVar(&enableLeaderElection, "leader-elect", false, "Enable leader election for the controller manager.")
+    flag.BoolVar(&secureMetrics, "metrics-secure", false, "Serve metrics over HTTPS if true.")
+    flag.StringVar(&webhookCertPath, "webhook-cert-path", "", "Directory containing the webhook TLS cert & key.")
+    flag.StringVar(&webhookCertName, "webhook-cert-name", "tls.crt", "Webhook TLS certificate filename.")
+    flag.StringVar(&webhookCertKey, "webhook-cert-key", "tls.key", "Webhook TLS key filename.")
+    flag.StringVar(&metricsCertPath, "metrics-cert-path", "", "Directory containing the metrics TLS cert & key.")
+    flag.StringVar(&metricsCertName, "metrics-cert-name", "tls.crt", "Metrics TLS certificate filename.")
+    flag.StringVar(&metricsCertKey, "metrics-cert-key", "tls.key", "Metrics TLS key filename.")
+    flag.BoolVar(&enableHTTP2, "enable-http2", false, "Enable HTTP/2 for the metrics & webhook servers (disabled by default due to CVEs).")
 
-	// if the enable-http2 flag is false (the default), http/2 should be disabled
-	// due to its vulnerabilities. More specifically, disabling http/2 will
-	// prevent from being vulnerable to the HTTP/2 Stream Cancellation and
-	// Rapid Reset CVEs. For more information see:
-	// - https://github.com/advisories/GHSA-qppj-fm5r-hxr3
-	// - https://github.com/advisories/GHSA-4374-p667-p6c8
-	disableHTTP2 := func(c *tls.Config) {
-		setupLog.Info("disabling http/2")
-		c.NextProtos = []string{"http/1.1"}
-	}
+    opts := zap.Options{Development: true}
+    opts.BindFlags(flag.CommandLine)
+    flag.Parse()
+    ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	if !enableHTTP2 {
-		tlsOpts = append(tlsOpts, disableHTTP2)
-	}
+    // Disable HTTP/2 unless explicitly requested
+    if !enableHTTP2 {
+        tlsOpts = append(tlsOpts, func(c *tls.Config) {
+            setupLog.Info("disabling http/2 on servers")
+            c.NextProtos = []string{"http/1.1"}
+        })
+    }
 
-	// Create watchers for metrics and webhooks certificates
-	var metricsCertWatcher, webhookCertWatcher *certwatcher.CertWatcher
+    // ----- Cert watchers -----
+    var (
+        metricsCertWatcher *certwatcher.CertWatcher
+        webhookCertWatcher *certwatcher.CertWatcher
+        webhookTLSOpts     = tlsOpts
+    )
 
-	// Initial webhook TLS options
-	webhookTLSOpts := tlsOpts
+    if webhookCertPath != "" {
+        w, err := certwatcher.New(
+            filepath.Join(webhookCertPath, webhookCertName),
+            filepath.Join(webhookCertPath, webhookCertKey),
+        )
+        if err != nil {
+            setupLog.Error(err, "failed to initialise webhook cert watcher")
+            os.Exit(1)
+        }
+        webhookCertWatcher = w
+        webhookTLSOpts = append(webhookTLSOpts, func(c *tls.Config) {
+            c.GetCertificate = webhookCertWatcher.GetCertificate
+        })
+    }
 
-	if len(webhookCertPath) > 0 {
-		setupLog.Info("Initializing webhook certificate watcher using provided certificates",
-			"webhook-cert-path", webhookCertPath, "webhook-cert-name", webhookCertName, "webhook-cert-key", webhookCertKey)
+    if metricsCertPath != "" {
+        m, err := certwatcher.New(
+            filepath.Join(metricsCertPath, metricsCertName),
+            filepath.Join(metricsCertPath, metricsCertKey),
+        )
+        if err != nil {
+            setupLog.Error(err, "failed to initialise metrics cert watcher")
+            os.Exit(1)
+        }
+        metricsCertWatcher = m
+        tlsOpts = append(tlsOpts, func(c *tls.Config) {
+            c.GetCertificate = metricsCertWatcher.GetCertificate
+        })
+    }
 
-		var err error
-		webhookCertWatcher, err = certwatcher.New(
-			filepath.Join(webhookCertPath, webhookCertName),
-			filepath.Join(webhookCertPath, webhookCertKey),
-		)
-		if err != nil {
-			setupLog.Error(err, "Failed to initialize webhook certificate watcher")
-			os.Exit(1)
-		}
+    // ----- Servers -----
+    webhookServer := webhook.NewServer(webhook.Options{TLSOpts: webhookTLSOpts})
 
-		webhookTLSOpts = append(webhookTLSOpts, func(config *tls.Config) {
-			config.GetCertificate = webhookCertWatcher.GetCertificate
-		})
-	}
+    metricsOpts := metricsserver.Options{
+        BindAddress:   metricsAddr,
+        SecureServing: secureMetrics,
+        TLSOpts:       tlsOpts,
+    }
+    if secureMetrics {
+        metricsOpts.FilterProvider = filters.WithAuthenticationAndAuthorization
+    }
 
-	webhookServer := webhook.NewServer(webhook.Options{
-		TLSOpts: webhookTLSOpts,
-	})
+    mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+        Scheme:                 scheme,
+        Metrics:                metricsOpts,
+        WebhookServer:          webhookServer,
+        HealthProbeBindAddress: probeAddr,
+        LeaderElection:         enableLeaderElection,
+        LeaderElectionID:       "capi-libvirt-manager-leader-election",
+    })
+    if err != nil {
+        setupLog.Error(err, "unable to create manager")
+        os.Exit(1)
+    }
 
-	// Metrics endpoint is enabled in 'config/default/kustomization.yaml'. The Metrics options configure the server.
-	// More info:
-	// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/metrics/server
-	// - https://book.kubebuilder.io/reference/metrics.html
-	metricsServerOptions := metricsserver.Options{
-		BindAddress:   metricsAddr,
-		SecureServing: secureMetrics,
-		TLSOpts:       tlsOpts,
-	}
+    // ----- Reconcilers -----
+    if err := (&controller.LibvirtClusterReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}).SetupWithManager(mgr); err != nil {
+        setupLog.Error(err, "unable to create LibvirtCluster controller")
+        os.Exit(1)
+    }
+    if err := (&controller.LibvirtMachineReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}).SetupWithManager(mgr); err != nil {
+        setupLog.Error(err, "unable to create LibvirtMachine controller")
+        os.Exit(1)
+    }
+    if err := (&controller.LibvirtMachineTemplateReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}).SetupWithManager(mgr); err != nil {
+        setupLog.Error(err, "unable to create LibvirtMachineTemplate controller")
+        os.Exit(1)
+    }
+    // +kubebuilder:scaffold:builder
 
-	if secureMetrics {
-		// FilterProvider is used to protect the metrics endpoint with authn/authz.
-		// These configurations ensure that only authorized users and service accounts
-		// can access the metrics endpoint. The RBAC are configured in 'config/rbac/kustomization.yaml'. More info:
-		// https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/metrics/filters#WithAuthenticationAndAuthorization
-		metricsServerOptions.FilterProvider = filters.WithAuthenticationAndAuthorization
-	}
+    // ----- Add cert watchers -----
+    if metricsCertWatcher != nil {
+        if err := mgr.Add(metricsCertWatcher); err != nil {
+            setupLog.Error(err, "unable to add metrics cert watcher")
+            os.Exit(1)
+        }
+    }
+    if webhookCertWatcher != nil {
+        if err := mgr.Add(webhookCertWatcher); err != nil {
+            setupLog.Error(err, "unable to add webhook cert watcher")
+            os.Exit(1)
+        }
+    }
 
-	// If the certificate is not specified, controller-runtime will automatically
-	// generate self-signed certificates for the metrics server. While convenient for development and testing,
-	// this setup is not recommended for production.
-	//
-	// TODO(user): If you enable certManager, uncomment the following lines:
-	// - [METRICS-WITH-CERTS] at config/default/kustomization.yaml to generate and use certificates
-	// managed by cert-manager for the metrics server.
-	// - [PROMETHEUS-WITH-CERTS] at config/prometheus/kustomization.yaml for TLS certification.
-	if len(metricsCertPath) > 0 {
-		setupLog.Info("Initializing metrics certificate watcher using provided certificates",
-			"metrics-cert-path", metricsCertPath, "metrics-cert-name", metricsCertName, "metrics-cert-key", metricsCertKey)
+    // ----- Health checks -----
+    if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+        setupLog.Error(err, "unable to set up health check")
+        os.Exit(1)
+    }
+    if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+        setupLog.Error(err, "unable to set up ready check")
+        os.Exit(1)
+    }
 
-		var err error
-		metricsCertWatcher, err = certwatcher.New(
-			filepath.Join(metricsCertPath, metricsCertName),
-			filepath.Join(metricsCertPath, metricsCertKey),
-		)
-		if err != nil {
-			setupLog.Error(err, "to initialize metrics certificate watcher", "error", err)
-			os.Exit(1)
-		}
-
-		metricsServerOptions.TLSOpts = append(metricsServerOptions.TLSOpts, func(config *tls.Config) {
-			config.GetCertificate = metricsCertWatcher.GetCertificate
-		})
-	}
-
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		Metrics:                metricsServerOptions,
-		WebhookServer:          webhookServer,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "457b7323.libvirt.io",
-		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
-		// when the Manager ends. This requires the binary to immediately end when the
-		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
-		// speeds up voluntary leader transitions as the new leader don't have to wait
-		// LeaseDuration time first.
-		//
-		// In the default scaffold provided, the program ends immediately after
-		// the manager stops, so would be fine to enable this option. However,
-		// if you are doing or is intended to do any operation such as perform cleanups
-		// after the manager stops then its usage might be unsafe.
-		// LeaderElectionReleaseOnCancel: true,
-	})
-	if err != nil {
-		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
-	}
-
-	if err := (&controller.LibvirtClusterReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "LibvirtCluster")
-		os.Exit(1)
-	}
-	if err := (&controller.LibvirtMachineReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "LibvirtMachine")
-		os.Exit(1)
-	}
-	if err := (&controller.LibvirtMachineTemplateReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "LibvirtMachineTemplate")
-		os.Exit(1)
-	}
-	// +kubebuilder:scaffold:builder
-
-	if metricsCertWatcher != nil {
-		setupLog.Info("Adding metrics certificate watcher to manager")
-		if err := mgr.Add(metricsCertWatcher); err != nil {
-			setupLog.Error(err, "unable to add metrics certificate watcher to manager")
-			os.Exit(1)
-		}
-	}
-
-	if webhookCertWatcher != nil {
-		setupLog.Info("Adding webhook certificate watcher to manager")
-		if err := mgr.Add(webhookCertWatcher); err != nil {
-			setupLog.Error(err, "unable to add webhook certificate watcher to manager")
-			os.Exit(1)
-		}
-	}
-
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
-	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
-	}
-
-	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
-	}
+    setupLog.Info("starting manager")
+    if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+        setupLog.Error(err, "problem running manager")
+        os.Exit(1)
+    }
 }
