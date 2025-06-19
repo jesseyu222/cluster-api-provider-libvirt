@@ -5,15 +5,17 @@
         "annotations": {
             "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"cluster.x-k8s.io/v1beta1\",\"kind\":\"Cluster\",\"metadata\":{\"annotations\":{},\"name\":\"demo-cluster\",\"namespace\":\"demo-cluster\"},\"spec\":{\"clusterNetwork\":{\"pods\":{\"cidrBlocks\":[\"10.244.0.0/16\"]},\"serviceDomain\":\"cluster.local\",\"services\":{\"cidrBlocks\":[\"10.96.0.0/12\"]}},\"controlPlaneRef\":{\"apiVersion\":\"controlplane.cluster.x-k8s.io/v1beta1\",\"kind\":\"KubeadmControlPlane\",\"name\":\"demo-cluster-control-plane\"},\"infrastructureRef\":{\"apiVersion\":\"infrastructure.cluster.x-k8s.io/v1beta1\",\"kind\":\"LibvirtCluster\",\"name\":\"demo-cluster-libvirt\"}}}\n"
         },
-        "creationTimestamp": "2025-06-19T18:43:01Z",
+        "creationTimestamp": "2025-06-19T19:24:11Z",
         "deletionGracePeriodSeconds": 0,
-        "deletionTimestamp": "2025-06-19T18:57:29Z",
-        "finalizers": [],
+        "deletionTimestamp": "2025-06-19T19:41:47Z",
+        "finalizers": [
+            "cluster.cluster.x-k8s.io"
+        ],
         "generation": 2,
         "name": "demo-cluster",
         "namespace": "demo-cluster",
-        "resourceVersion": "83912",
-        "uid": "f05d5e02-cb8f-409d-9fb8-6b76567d4c70"
+        "resourceVersion": "93202",
+        "uid": "64af1601-5682-49e3-801c-c38b2279efde"
     },
     "spec": {
         "clusterNetwork": {
@@ -49,14 +51,14 @@
     "status": {
         "conditions": [
             {
-                "lastTransitionTime": "2025-06-19T18:57:29Z",
+                "lastTransitionTime": "2025-06-19T19:45:15Z",
                 "reason": "Deleted",
                 "severity": "Info",
                 "status": "False",
                 "type": "Ready"
             },
             {
-                "lastTransitionTime": "2025-06-19T18:43:01Z",
+                "lastTransitionTime": "2025-06-19T19:24:11Z",
                 "message": "Waiting for control plane provider to indicate the control plane has been initialized",
                 "reason": "WaitingForControlPlaneProviderInitialized",
                 "severity": "Info",
@@ -64,7 +66,7 @@
                 "type": "ControlPlaneInitialized"
             },
             {
-                "lastTransitionTime": "2025-06-19T18:57:29Z",
+                "lastTransitionTime": "2025-06-19T19:45:15Z",
                 "reason": "Deleted",
                 "severity": "Info",
                 "status": "False",
@@ -75,7 +77,7 @@
         "v1beta2": {
             "conditions": [
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "* Deleting: Please check controller logs for errors\n* RemoteConnectionProbe: Remote connection probe failed\n* InfrastructureReady: Please check controller logs for errors",
                     "observedGeneration": 2,
                     "reason": "NotAvailable",
@@ -83,7 +85,7 @@
                     "type": "Available"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "Remote connection probe failed",
                     "observedGeneration": 2,
                     "reason": "ProbeFailed",
@@ -91,7 +93,7 @@
                     "type": "RemoteConnectionProbe"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "Please check controller logs for errors",
                     "observedGeneration": 2,
                     "reason": "InternalError",
@@ -99,7 +101,7 @@
                     "type": "InfrastructureReady"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:57:29Z",
+                    "lastTransitionTime": "2025-06-19T19:45:15Z",
                     "message": "Please check controller logs for errors",
                     "observedGeneration": 2,
                     "reason": "InternalError",
@@ -107,7 +109,7 @@
                     "type": "ControlPlaneInitialized"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "KubeadmControlPlane does not exist",
                     "observedGeneration": 2,
                     "reason": "ObjectDoesNotExist",
@@ -115,7 +117,7 @@
                     "type": "ControlPlaneAvailable"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "",
                     "observedGeneration": 2,
                     "reason": "NoWorkers",
@@ -123,7 +125,7 @@
                     "type": "WorkersAvailable"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "",
                     "observedGeneration": 2,
                     "reason": "NotRollingOut",
@@ -131,7 +133,7 @@
                     "type": "RollingOut"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "",
                     "observedGeneration": 2,
                     "reason": "NotRemediating",
@@ -139,7 +141,7 @@
                     "type": "Remediating"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "",
                     "observedGeneration": 2,
                     "reason": "NotScalingDown",
@@ -147,7 +149,7 @@
                     "type": "ScalingDown"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:57:29Z",
+                    "lastTransitionTime": "2025-06-19T19:41:47Z",
                     "message": "",
                     "observedGeneration": 2,
                     "reason": "NotScalingUp",
@@ -155,7 +157,7 @@
                     "type": "ScalingUp"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "",
                     "observedGeneration": 2,
                     "reason": "NoReplicas",
@@ -163,7 +165,7 @@
                     "type": "ControlPlaneMachinesReady"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "",
                     "observedGeneration": 2,
                     "reason": "NoReplicas",
@@ -171,7 +173,7 @@
                     "type": "WorkerMachinesReady"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "",
                     "observedGeneration": 2,
                     "reason": "NoReplicas",
@@ -179,7 +181,7 @@
                     "type": "ControlPlaneMachinesUpToDate"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "",
                     "observedGeneration": 2,
                     "reason": "NoReplicas",
@@ -187,7 +189,7 @@
                     "type": "WorkerMachinesUpToDate"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:43:01Z",
+                    "lastTransitionTime": "2025-06-19T19:24:11Z",
                     "message": "",
                     "observedGeneration": 2,
                     "reason": "NotPaused",
@@ -195,7 +197,7 @@
                     "type": "Paused"
                 },
                 {
-                    "lastTransitionTime": "2025-06-19T18:57:29Z",
+                    "lastTransitionTime": "2025-06-19T19:41:47Z",
                     "message": "Please check controller logs for errors",
                     "observedGeneration": 2,
                     "reason": "InternalError",

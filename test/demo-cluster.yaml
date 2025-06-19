@@ -51,10 +51,14 @@ spec:
   replicas: 1
   version: v1.31.0
   machineTemplate:
+    metadata:
+      labels:
+        cluster.x-k8s.io/cluster-name: demo-cluster
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: LibvirtMachineTemplate
       name: demo-cp-template
+      namespace: demo-cluster
     nodeDrainTimeout: 5m
   kubeadmConfigSpec:
     clusterConfiguration:
