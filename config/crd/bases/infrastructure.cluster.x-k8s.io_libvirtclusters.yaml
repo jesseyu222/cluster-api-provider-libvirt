@@ -42,6 +42,8 @@ spec:
           spec:
             description: LibvirtClusterSpec defines the desired state of LibvirtCluster.
             properties:
+              clusterName:
+                type: string
               controlPlaneEndpoint:
                 description: |-
                   ControlPlaneEndpoint is the endpoint used to communicate with the
@@ -71,6 +73,8 @@ spec:
                   that the controller will connect to.
                 minLength: 1
                 type: string
+            required:
+            - clusterName
             type: object
           status:
             description: LibvirtClusterStatus defines the observed state of LibvirtCluster.

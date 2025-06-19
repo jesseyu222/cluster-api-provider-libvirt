@@ -3,8 +3,8 @@ package v1beta1
 
 // Finalizer strings reused across the provider.
 const (
-	MachineFinalizer = "libvirtmachine.infrastructure.libvirt.io/finalizer"
-	ClusterFinalizer = "libvirtcluster.infrastructure.libvirt.io/finalizer"
+	MachineFinalizer = "libvirtmachine.infrastructure.cluster.x-k8s.io/finalizer"
+	ClusterFinalizer = "libvirtcluster.infrastructure.cluster.x-k8s.io/finalizer"
 )
 
 // Condition types.

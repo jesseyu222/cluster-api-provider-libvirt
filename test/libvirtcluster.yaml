@@ -1,0 +1,15 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: LibvirtCluster
+metadata:
+  name: demo-cluster-libvirt
+  namespace: default
+  ownerReferences:
+    - apiVersion: cluster.x-k8s.io/v1beta1
+      kind: Cluster
+      name: demo-cluster
+      uid: "${CLUSTER_UID}"   
+      controller: true
+      blockOwnerDeletion: true
+spec:
+  uri: qemu:///system
+  network: default

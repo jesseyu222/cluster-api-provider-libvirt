@@ -17,47 +17,35 @@ limitations under the License.
 package controller
 
 import (
-	"context"
+    "context"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
+    "k8s.io/apimachinery/pkg/runtime"
+    ctrl "sigs.k8s.io/controller-runtime"
+    "sigs.k8s.io/controller-runtime/pkg/client"
 
-	infrastructurev1beta1 "github.com/jesseyu222/cluster-api-provider-libvirt/api/v1beta1"
+    infrav1 "github.com/jesseyu222/cluster-api-provider-libvirt/api/v1beta1"
 )
 
 // LibvirtMachineTemplateReconciler reconciles a LibvirtMachineTemplate object
 type LibvirtMachineTemplateReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
+    client.Client
+    Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=infrastructure.libvirt.io,resources=libvirtmachinetemplates,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=infrastructure.libvirt.io,resources=libvirtmachinetemplates/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=infrastructure.libvirt.io,resources=libvirtmachinetemplates/finalizers,verbs=update
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=libvirtmachinetemplates,verbs=get;list;watch
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=libvirtmachinetemplates/status,verbs=get
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=libvirtmachinetemplates/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the LibvirtMachineTemplate object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/reconcile
+// Reconcile is a no-op for LibvirtMachineTemplate (template objects are inert, per Cluster API contract)
 func (r *LibvirtMachineTemplateReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = logf.FromContext(ctx)
-
-	// TODO(user): your logic here
-
-	return ctrl.Result{}, nil
+    // No reconciliation needed for templates
+    return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *LibvirtMachineTemplateReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&infrastructurev1beta1.LibvirtMachineTemplate{}).
-		Named("libvirtmachinetemplate").
-		Complete(r)
+    return ctrl.NewControllerManagedBy(mgr).
+        For(&infrav1.LibvirtMachineTemplate{}).
+        Named("libvirtmachinetemplate").
+        Complete(r)
 }

@@ -36,7 +36,7 @@ type LibvirtMachineSpec struct {
     // MemoryMiB is RAM in MiB.
     // +kubebuilder:validation:Minimum=512
     // +kubebuilder:default:=2048
-    MemoryMiB int32 `json:"memoryMiB,omitempty"`
+    MemoryMB int32 `json:"memoryMB,omitempty"`
 
     // Network is the libvirt network name to attach.
     // +optional

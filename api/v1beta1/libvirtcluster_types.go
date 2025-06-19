@@ -42,7 +42,8 @@ type LibvirtClusterSpec struct {
     // control plane.
     // +optional
     ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint,omitempty"`
-
+    // +kubebuilder:validation:Required
+    ClusterName string `json:"clusterName"`
     // URI is the Libvirt driver URI (e.g., qemu+tcp://192.168.122.1/system)
     // that the controller will connect to.
     // +kubebuilder:validation:MinLength=1

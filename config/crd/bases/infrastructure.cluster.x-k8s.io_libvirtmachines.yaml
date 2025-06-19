@@ -55,7 +55,7 @@ spec:
               image:
                 description: Image is the QCOW2/RAW image to boot from.
                 type: string
-              memoryMiB:
+              memoryMB:
                 default: 2048
                 description: MemoryMiB is RAM in MiB.
                 format: int32

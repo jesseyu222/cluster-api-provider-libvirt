@@ -1,0 +1,26 @@
+apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+kind: KubeadmControlPlane
+metadata:
+  name: demo-cluster-control-plane
+  namespace: default
+  ownerReferences:
+    - apiVersion: cluster.x-k8s.io/v1beta1
+      kind: Cluster
+      name: demo-cluster
+      uid: "${CLUSTER_UID}"
+spec:
+  replicas: 1
+  version: v1.31.0
+  machineTemplate:
+    infrastructureRef:
+      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+      kind: LibvirtMachineTemplate
+      name: demo-cp-template
+    nodeDrainTimeout: 5m
+  kubeadmConfigSpec:
+    clusterConfiguration:
+      apiServer: {}
+      controllerManager: {}
+      scheduler: {}
+    initConfiguration: {}
+    joinConfiguration: {}

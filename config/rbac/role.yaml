@@ -9,18 +9,14 @@ rules:
   resources:
   - clusters
   - clusters/status
-  - machines
-  - machines/status
   verbs:
   - get
   - list
   - watch
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters
-  - libvirtmachines
-  - libvirtmachinetemplates
   verbs:
   - create
   - delete
@@ -30,19 +26,31 @@ rules:
   - update
   - watch
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters/finalizers
   - libvirtmachinetemplates/finalizers
   verbs:
   - update
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters/status
-  - libvirtmachines/status
-  - libvirtmachinetemplates/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - libvirtmachinetemplates
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - libvirtmachinetemplates/status
+  verbs:
+  - get

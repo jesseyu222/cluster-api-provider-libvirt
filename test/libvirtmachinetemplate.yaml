@@ -1,0 +1,17 @@
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: LibvirtMachineTemplate
+metadata:
+  name: demo-cp-template
+  namespace: default
+  ownerReferences:
+    - apiVersion: cluster.x-k8s.io/v1beta1
+      kind: Cluster
+      name: demo-cluster
+      uid: "${CLUSTER_UID}"
+spec:
+  template:
+    spec:
+      image: /var/lib/libvirt/images/ubuntu-22.04-cloudimg.qcow2
+      cpu: 2
+      memoryMB: 2048
+      network: default

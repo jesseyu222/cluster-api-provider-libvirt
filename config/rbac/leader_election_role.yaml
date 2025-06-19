@@ -6,6 +6,7 @@ metadata:
     app.kubernetes.io/name: cluster-api-provider-libvirt
     app.kubernetes.io/managed-by: kustomize
   name: leader-election-role
+  namespace: cluster-api-provider-libvirt-system
 rules:
 - apiGroups:
   - ""

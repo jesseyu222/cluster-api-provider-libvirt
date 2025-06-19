@@ -1,15 +1,13 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  labels:
-    app.kubernetes.io/name: cluster-api-provider-libvirt
-    app.kubernetes.io/managed-by: kustomize
-  name: leader-election-rolebinding
+  name: leader-election-role-binding
+  namespace: cluster-api-provider-libvirt-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: leader-election-role
 subjects:
-- kind: ServiceAccount
-  name: controller-manager
-  namespace: system
+  - kind: ServiceAccount
+    name: cluster-api-provider-libvirt-controller-manager
+    namespace: cluster-api-provider-libvirt-system
