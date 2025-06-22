@@ -1,0 +1,43 @@
+# ---------- 1. Cluster ----------
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: Cluster
+metadata:
+  name: ${ CLUSTER_NAME }
+spec:
+  clusterNetwork:
+    pods:
+      cidrBlocks: ["192.168.0.0/16"]
+    services:
+      cidrBlocks: ["10.96.0.0/12"]
+  controlPlaneRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: LibvirtMachineTemplate
+    name: ${ CLUSTER_NAME }-control-plane
+  infrastructureRef:
+    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: LibvirtCluster
+    name: ${ CLUSTER_NAME }
+
+---
+# ---------- 2. LibvirtCluster ----------
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: LibvirtCluster
+metadata:
+  name: ${ CLUSTER_NAME }
+spec:
+  uri: ${ LIBVIRT_URI := "qemu:///system" }     # 改成 qemu+tcp://HOST/system 時
+  network: ${ LIBVIRT_NETWORK := "default" }
+
+---
+# ---------- 3. 控制平面 MachineTemplate ----------
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+kind: LibvirtMachineTemplate
+metadata:
+  name: ${ CLUSTER_NAME }-control-plane
+spec:
+  template:
+    spec:
+      image: ${ IMAGE_URL := "http://192.168.122.1/images/ubuntu-22.04.qcow2" }
+      cpu:   ${ CPUS := 2 }
+      memoryMiB: ${ MEM := 2048 }
+      network: ${ LIBVIRT_NETWORK := "default" }
