@@ -20,30 +20,11 @@ import (
 // LibvirtMachineSpec defines the desired state of a Libvirt virtual machine.
 // +k8s:openapi-gen=true
 type LibvirtMachineSpec struct {
-    // ProviderID encodes the libvirt domain UUID. Format: libvirt://<uuid>
-    // +optional
     ProviderID *string `json:"providerID,omitempty"`
-
-    // Image is the QCOW2/RAW image to boot from.
-    // +optional
-    Image *string `json:"image,omitempty"`
-
-    // CPU is the number of vCPUs.
-    // +kubebuilder:validation:Minimum=1
-    // +kubebuilder:default:=2
-    CPU int32 `json:"cpu,omitempty"`
-
-    // MemoryMiB is RAM in MiB.
-    // +kubebuilder:validation:Minimum=512
-    // +kubebuilder:default:=2048
-    MemoryMiB int32 `json:"memoryMiB,omitempty"`
-
-    // Network is the libvirt network name to attach.
-    // +optional
-    Network *string `json:"network,omitempty"`
-
-    // CloudInitSecret is a secret name containing user‑data.
-    // +optional
+    Image      *string `json:"image,omitempty"`
+    CPU        int32   `json:"cpu,omitempty"`
+    MemoryMiB  int32   `json:"memoryMiB,omitempty"`
+    Network    *string `json:"network,omitempty"`
     CloudInitSecret *string `json:"cloudInitSecret,omitempty"`
 }
 

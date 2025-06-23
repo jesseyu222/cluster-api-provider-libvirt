@@ -46,29 +46,18 @@ spec:
               virtual machine.
             properties:
               cloudInitSecret:
-                description: CloudInitSecret is a secret name containing user‑data.
                 type: string
               cpu:
-                default: 2
-                description: CPU is the number of vCPUs.
                 format: int32
-                minimum: 1
                 type: integer
               image:
-                description: Image is the QCOW2/RAW image to boot from.
                 type: string
               memoryMiB:
-                default: 2048
-                description: MemoryMiB is RAM in MiB.
                 format: int32
-                minimum: 512
                 type: integer
               network:
-                description: Network is the libvirt network name to attach.
                 type: string
               providerID:
-                description: 'ProviderID encodes the libvirt domain UUID. Format:
-                  libvirt://<uuid>'
                 type: string
             type: object
           status:
