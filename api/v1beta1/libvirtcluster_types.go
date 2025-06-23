@@ -10,8 +10,8 @@
 package v1beta1
 
 import (
-    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-    clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
 )
 
 // -----------------------------------------------------------------------------
@@ -19,9 +19,9 @@ import (
 // -----------------------------------------------------------------------------
 
 const (
-    // LibvirtClusterFinalizer allows LibvirtClusterReconciler to clean up
-    // resources on deletion.
-    LibvirtClusterFinalizer = "libvirtcluster.infrastructure.cluster.x-k8s.io/finalizer"
+	// LibvirtClusterFinalizer allows LibvirtClusterReconciler to clean up
+	// resources on deletion.
+	LibvirtClusterFinalizer = "libvirtcluster.infrastructure.cluster.x-k8s.io/finalizer"
 )
 
 // -----------------------------------------------------------------------------
@@ -38,22 +38,22 @@ const (
 // +kubebuilder:printcolumn:name="Age",type=date,JSONPath=`.metadata.creationTimestamp`
 // +kubebuilder:subresource:status
 type LibvirtClusterSpec struct {
-    // ControlPlaneEndpoint is the endpoint used to communicate with the
-    // control plane.
-    // +optional
-    ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint,omitempty"`
+	// ControlPlaneEndpoint is the endpoint used to communicate with the
+	// control plane.
+	// +optional
+	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint,omitempty"`
 
-    // URI is the Libvirt driver URI (e.g., qemu+tcp://192.168.122.1/system)
-    // that the controller will connect to.
-    // +kubebuilder:validation:MinLength=1
-    // +optional
-    URI *string `json:"uri,omitempty"`
+	// URI is the Libvirt driver URI (e.g., qemu+tcp://192.168.122.1/system)
+	// that the controller will connect to.
+	// +kubebuilder:validation:MinLength=1
+	// +optional
+	URI *string `json:"uri,omitempty"`
 
-    // Network references the Libvirt network to which the cluster’s machines
-    // should be attached.
-    // +kubebuilder:validation:MinLength=1
-    // +optional
-    Network *string `json:"network,omitempty"`
+	// Network references the Libvirt network to which the cluster’s machines
+	// should be attached.
+	// +kubebuilder:validation:MinLength=1
+	// +optional
+	Network *string `json:"network,omitempty"`
 }
 
 // -----------------------------------------------------------------------------
@@ -64,16 +64,16 @@ type LibvirtClusterSpec struct {
 // +kubebuilder:validation:Optional
 // +kubebuilder:resource:scope=Namespaced
 type LibvirtClusterStatus struct {
-    // Ready indicates the cluster infrastructure is ready.
-    Ready bool `json:"ready"`
+	// Ready indicates the cluster infrastructure is ready.
+	Ready bool `json:"ready"`
 
-    // Conditions defines the current service state of the LibvirtCluster.
-    // +optional
-    Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	// Conditions defines the current service state of the LibvirtCluster.
+	// +optional
+	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
 
-    // FailureMessage indicates terminal errors from the controller.
-    // +optional
-    FailureMessage *string `json:"failureMessage,omitempty"`
+	// FailureMessage indicates terminal errors from the controller.
+	// +optional
+	FailureMessage *string `json:"failureMessage,omitempty"`
 }
 
 // -----------------------------------------------------------------------------
@@ -85,11 +85,11 @@ type LibvirtClusterStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:storageversion
 type LibvirtCluster struct {
-    metav1.TypeMeta   `json:",inline"`
-    metav1.ObjectMeta `json:"metadata,omitempty"`
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-    Spec   LibvirtClusterSpec   `json:"spec,omitempty"`
-    Status LibvirtClusterStatus `json:"status,omitempty"`
+	Spec   LibvirtClusterSpec   `json:"spec,omitempty"`
+	Status LibvirtClusterStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -99,11 +99,11 @@ type LibvirtCluster struct {
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 // -----------------------------------------------------------------------------
 type LibvirtClusterList struct {
-    metav1.TypeMeta `json:",inline"`
-    metav1.ListMeta `json:"metadata,omitempty"`
-    Items           []LibvirtCluster `json:"items"`
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata,omitempty"`
+	Items           []LibvirtCluster `json:"items"`
 }
 
 func init() {
-    SchemeBuilder.Register(&LibvirtCluster{}, &LibvirtClusterList{})
+	SchemeBuilder.Register(&LibvirtCluster{}, &LibvirtClusterList{})
 }

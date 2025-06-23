@@ -1,122 +1,877 @@
-apiVersion: cluster.x-k8s.io/v1beta1
-kind: Cluster
+apiVersion: v1
+kind: Namespace
 metadata:
-  name: demo-cluster
-  namespace: demo-cluster
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+    control-plane: controller-manager
+  name: cluster-api-provider-libvirt-system
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: libvirtclusters.infrastructure.cluster.x-k8s.io
 spec:
-  clusterNetwork:
-    pods:
-      cidrBlocks: ["10.244.0.0/16"]
-    serviceDomain: "cluster.local"
-    services:
-      cidrBlocks: ["10.96.0.0/12"]
-  controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
-    kind: KubeadmControlPlane
-    name: demo-cluster-control-plane
-  infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
     kind: LibvirtCluster
-    name: demo-cluster-libvirt
+    listKind: LibvirtClusterList
+    plural: libvirtclusters
+    shortNames:
+    - lvcluster
+    singular: libvirtcluster
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: LibvirtClusterSpec defines the desired state of LibvirtCluster.
+            properties:
+              controlPlaneEndpoint:
+                description: |-
+                  ControlPlaneEndpoint is the endpoint used to communicate with the
+                  control plane.
+                properties:
+                  host:
+                    description: host is the hostname on which the API server is serving.
+                    maxLength: 512
+                    type: string
+                  port:
+                    description: port is the port on which the API server is serving.
+                    format: int32
+                    type: integer
+                required:
+                - host
+                - port
+                type: object
+              network:
+                description: |-
+                  Network references the Libvirt network to which the cluster’s machines
+                  should be attached.
+                minLength: 1
+                type: string
+              uri:
+                description: |-
+                  URI is the Libvirt driver URI (e.g., qemu+tcp://192.168.122.1/system)
+                  that the controller will connect to.
+                minLength: 1
+                type: string
+            type: object
+          status:
+            description: LibvirtClusterStatus defines the observed state of LibvirtCluster.
+            properties:
+              conditions:
+                description: Conditions defines the current service state of the LibvirtCluster.
+                items:
+                  description: Condition defines an observation of a Cluster API resource
+                    operational state.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
+                      type: string
+                    reason:
+                      description: |-
+                        reason is the reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may be empty.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                    severity:
+                      description: |-
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
+                      maxLength: 32
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - status
+                  - type
+                  type: object
+                type: array
+              failureMessage:
+                description: FailureMessage indicates terminal errors from the controller.
+                type: string
+              ready:
+                description: Ready indicates the cluster infrastructure is ready.
+                type: boolean
+            required:
+            - ready
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: LibvirtCluster
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
 metadata:
-  name: demo-cluster-libvirt
-  namespace: demo-cluster
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: libvirtmachines.infrastructure.cluster.x-k8s.io
 spec:
-  #  TCP host
-  uri: qemu+tcp://172.31.15.143/system
-  network: default
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: LibvirtMachine
+    listKind: LibvirtMachineList
+    plural: libvirtmachines
+    shortNames:
+    - lvmachine
+    singular: libvirtmachine
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: LibvirtMachineSpec defines the desired state of a Libvirt
+              virtual machine.
+            properties:
+              cloudInitSecret:
+                description: CloudInitSecret is a secret name containing user‑data.
+                type: string
+              cpu:
+                default: 2
+                description: CPU is the number of vCPUs.
+                format: int32
+                minimum: 1
+                type: integer
+              image:
+                description: Image is the QCOW2/RAW image to boot from.
+                type: string
+              memoryMiB:
+                default: 2048
+                description: MemoryMiB is RAM in MiB.
+                format: int32
+                minimum: 512
+                type: integer
+              network:
+                description: Network is the libvirt network name to attach.
+                type: string
+              providerID:
+                description: 'ProviderID encodes the libvirt domain UUID. Format:
+                  libvirt://<uuid>'
+                type: string
+            type: object
+          status:
+            properties:
+              addresses:
+                description: Addresses are IPs assigned to the VM.
+                items:
+                  description: MachineAddress contains information for the node's
+                    address.
+                  properties:
+                    address:
+                      description: address is the machine address.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                    type:
+                      description: type is the machine address type, one of Hostname,
+                        ExternalIP, InternalIP, ExternalDNS or InternalDNS.
+                      enum:
+                      - Hostname
+                      - ExternalIP
+                      - InternalIP
+                      - ExternalDNS
+                      - InternalDNS
+                      type: string
+                  required:
+                  - address
+                  - type
+                  type: object
+                type: array
+              conditions:
+                description: Conditions standard CAPI conditions.
+                items:
+                  description: Condition defines an observation of a Cluster API resource
+                    operational state.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed. If that is not known, then using the time when
+                        the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This field may be empty.
+                      maxLength: 10240
+                      minLength: 1
+                      type: string
+                    reason:
+                      description: |-
+                        reason is the reason for the condition's last transition in CamelCase.
+                        The specific API may choose whether or not this field is considered a guaranteed API.
+                        This field may be empty.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                    severity:
+                      description: |-
+                        severity provides an explicit classification of Reason code, so the users or machines can immediately
+                        understand the current situation and act accordingly.
+                        The Severity field MUST be set only when Status=False.
+                      maxLength: 32
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions
+                        can be useful (see .node.status.conditions), the ability to deconflict is important.
+                      maxLength: 256
+                      minLength: 1
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - status
+                  - type
+                  type: object
+                type: array
+              failureMessage:
+                description: FailureMessage is a human‑readable error.
+                type: string
+              failureReason:
+                description: FailureReason is set on terminal errors.
+                type: string
+              ready:
+                type: boolean
+            required:
+            - ready
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: LibvirtMachineTemplate
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
 metadata:
-  name: demo-cp-template
-  namespace: demo-cluster
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.18.0
+  name: libvirtmachinetemplates.infrastructure.cluster.x-k8s.io
 spec:
-  template:
-    spec:
-      image: /var/lib/libvirt/images/ubuntu-22.04-cloudimg.qcow2
-      cpu: 2
-      memoryMiB: 2048
-      network: default
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: LibvirtMachineTemplate
+    listKind: LibvirtMachineTemplateList
+    plural: libvirtmachinetemplates
+    shortNames:
+    - lvmachinetpl
+    singular: libvirtmachinetemplate
+  scope: Namespaced
+  versions:
+  - name: v1beta1
+    schema:
+      openAPIV3Schema:
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: LibvirtMachineTemplateSpec describes the template.
+            properties:
+              template:
+                description: LibvirtMachineTemplateResource holds metadata + spec
+                  for Machines.
+                properties:
+                  metadata:
+                    type: object
+                  spec:
+                    description: LibvirtMachineSpec defines the desired state of a
+                      Libvirt virtual machine.
+                    properties:
+                      cloudInitSecret:
+                        description: CloudInitSecret is a secret name containing user‑data.
+                        type: string
+                      cpu:
+                        default: 2
+                        description: CPU is the number of vCPUs.
+                        format: int32
+                        minimum: 1
+                        type: integer
+                      image:
+                        description: Image is the QCOW2/RAW image to boot from.
+                        type: string
+                      memoryMiB:
+                        default: 2048
+                        description: MemoryMiB is RAM in MiB.
+                        format: int32
+                        minimum: 512
+                        type: integer
+                      network:
+                        description: Network is the libvirt network name to attach.
+                        type: string
+                      providerID:
+                        description: 'ProviderID encodes the libvirt domain UUID.
+                          Format: libvirt://<uuid>'
+                        type: string
+                    type: object
+                type: object
+            required:
+            - template
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
-kind: KubeadmControlPlane
+apiVersion: v1
+kind: ServiceAccount
 metadata:
-  name: demo-cluster-control-plane
-  namespace: demo-cluster
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-controller-manager
+  namespace: cluster-api-provider-libvirt-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-leader-election-role
+  namespace: cluster-api-provider-libvirt-system
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-libvirtcluster-admin-role
+rules:
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtclusters
+  verbs:
+  - '*'
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtclusters/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-libvirtcluster-editor-role
+rules:
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtclusters/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-libvirtcluster-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtclusters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtclusters/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-libvirtmachine-admin-role
+rules:
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtmachines
+  verbs:
+  - '*'
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtmachines/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-libvirtmachine-editor-role
+rules:
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtmachines
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtmachines/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-libvirtmachine-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtmachines
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtmachines/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-libvirtmachinetemplate-admin-role
+rules:
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtmachinetemplates
+  verbs:
+  - '*'
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtmachinetemplates/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-libvirtmachinetemplate-editor-role
+rules:
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtmachinetemplates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtmachinetemplates/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-libvirtmachinetemplate-viewer-role
+rules:
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtmachinetemplates
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtmachinetemplates/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-api-provider-libvirt-manager-role
+rules:
+- apiGroups:
+  - cluster.x-k8s.io
+  resources:
+  - clusters
+  - clusters/status
+  - machines
+  - machines/status
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtclusters
+  - libvirtmachines
+  - libvirtmachinetemplates
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtclusters/finalizers
+  - libvirtmachinetemplates/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - infrastructure.libvirt.io
+  resources:
+  - libvirtclusters/status
+  - libvirtmachines/status
+  - libvirtmachinetemplates/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-api-provider-libvirt-metrics-auth-role
+rules:
+- apiGroups:
+  - authentication.k8s.io
+  resources:
+  - tokenreviews
+  verbs:
+  - create
+- apiGroups:
+  - authorization.k8s.io
+  resources:
+  - subjectaccessreviews
+  verbs:
+  - create
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cluster-api-provider-libvirt-metrics-reader
+rules:
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-leader-election-rolebinding
+  namespace: cluster-api-provider-libvirt-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cluster-api-provider-libvirt-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: cluster-api-provider-libvirt-controller-manager
+  namespace: cluster-api-provider-libvirt-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+  name: cluster-api-provider-libvirt-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-api-provider-libvirt-manager-role
+subjects:
+- kind: ServiceAccount
+  name: cluster-api-provider-libvirt-controller-manager
+  namespace: cluster-api-provider-libvirt-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-api-provider-libvirt-metrics-auth-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-api-provider-libvirt-metrics-auth-role
+subjects:
+- kind: ServiceAccount
+  name: cluster-api-provider-libvirt-controller-manager
+  namespace: cluster-api-provider-libvirt-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+    control-plane: controller-manager
+  name: cluster-api-provider-libvirt-controller-manager-metrics-service
+  namespace: cluster-api-provider-libvirt-system
+spec:
+  ports:
+  - name: https
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+    control-plane: controller-manager
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: cluster-api-provider-libvirt
+    control-plane: controller-manager
+  name: cluster-api-provider-libvirt-controller-manager
+  namespace: cluster-api-provider-libvirt-system
 spec:
   replicas: 1
-  version: v1.31.0
-  machineTemplate:
-    metadata:
-      labels:
-        cluster.x-k8s.io/cluster-name: demo-cluster
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: LibvirtMachineTemplate
-      name: demo-cp-template
-      namespace: demo-cluster
-    nodeDrainTimeout: 5m
-  kubeadmConfigSpec:
-    clusterConfiguration: {}
-    initConfiguration: {}
-    joinConfiguration: {}
----
-# Worker Node MachineTemplate
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-kind: LibvirtMachineTemplate
-metadata:
-  name: demo-worker-template
-  namespace: demo-cluster
-spec:
-  template:
-    spec:
-      image: /var/lib/libvirt/images/ubuntu-22.04-cloudimg.qcow2
-      cpu: 2
-      memoryMiB: 2048
-      network: default
----
-# MachineDeployment
-apiVersion: cluster.x-k8s.io/v1beta1
-kind: MachineDeployment
-metadata:
-  name: demo-worker-deployment
-  namespace: demo-cluster
-spec:
-  clusterName: demo-cluster
-  replicas: 2
   selector:
     matchLabels:
-      nodepool: worker
+      app.kubernetes.io/name: cluster-api-provider-libvirt
+      control-plane: controller-manager
   template:
     metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
       labels:
-        cluster.x-k8s.io/cluster-name: demo-cluster
-        nodepool: worker
+        app.kubernetes.io/name: cluster-api-provider-libvirt
+        control-plane: controller-manager
     spec:
-      version: v1.31.0
-      clusterName: demo-cluster
-      bootstrap:
-        configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
-          kind: KubeadmConfigTemplate
-          name: demo-worker-bootstrap
-      infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-        kind: LibvirtMachineTemplate
-        name: demo-worker-template
-        namespace: demo-cluster
----
-# Worker Bootstrap（KubeadmConfigTemplate）
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
-kind: KubeadmConfigTemplate
-metadata:
-  name: demo-worker-bootstrap
-  namespace: demo-cluster
-spec:
-  template:
-    spec:
-      joinConfiguration: {}
+      containers:
+      - args:
+        - --metrics-bind-address=:8443
+        - --leader-elect
+        - --health-probe-bind-address=:8081
+        command:
+        - /manager
+        image: docker.io/jesseyu222/cluster-api-libvirt-controller:v0.1.1
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8081
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        name: manager
+        ports: []
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          limits:
+            cpu: 500m
+            memory: 128Mi
+          requests:
+            cpu: 10m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts: []
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: cluster-api-provider-libvirt-controller-manager
+      terminationGracePeriodSeconds: 10
+      volumes: []
