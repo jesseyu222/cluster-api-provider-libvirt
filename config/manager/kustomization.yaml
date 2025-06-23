@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: jesseyu222/cluster-api-provider-libvirt
-  newTag: v0.1.1
+  newTag: v0.1.0
