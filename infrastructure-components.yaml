@@ -840,7 +840,7 @@ spec:
         - --health-probe-bind-address=:8081
         command:
         - /manager
-        image: docker.io/jesseyu222/cluster-api-libvirt-controller:v0.1.2
+        image: docker.io/jesseyu222/cluster-api-libvirt-controller:v0.1.3
         livenessProbe:
           httpGet:
             path: /healthz

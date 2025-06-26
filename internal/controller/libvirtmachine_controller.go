@@ -2,43 +2,55 @@ package controller
 
 import (
 	"context"
-    "fmt"
-    libvirt "libvirt.org/go/libvirt"
+	"fmt"
+	"net"
+	"net/url"
+	"strings"
+	"time"
 
-    infrav1 "github.com/jesseyu222/cluster-api-provider-libvirt/api/v1beta1"
-    "k8s.io/apimachinery/pkg/runtime"
+	libvirt "github.com/digitalocean/go-libvirt"
+	infrav1 "github.com/jesseyu222/cluster-api-provider-libvirt/api/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/cluster-api/util"
+	"sigs.k8s.io/cluster-api/util/annotations"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	ctrlLog "sigs.k8s.io/controller-runtime/pkg/log"
 
-    "sigs.k8s.io/cluster-api/util"
-    "sigs.k8s.io/cluster-api/util/annotations"
-    ctrl "sigs.k8s.io/controller-runtime"
-    "sigs.k8s.io/controller-runtime/pkg/client"
-    "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-    ctrlLog "sigs.k8s.io/controller-runtime/pkg/log"
-    "strings"
-    "time"
+	"encoding/hex" 
 )
 
 var machineLog = ctrlLog.Log.WithName("controllers").WithName("LibvirtMachine")
+
 const LibvirtMachineFinalizer = "libvirtmachine.infrastructure.cluster.x-k8s.io/finalizer"
-const undefFlags = libvirt.DOMAIN_UNDEFINE_MANAGED_SAVE |
-    libvirt.DOMAIN_UNDEFINE_SNAPSHOTS_METADATA |
-    libvirt.DOMAIN_UNDEFINE_NVRAM
 
 type LibvirtMachineReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=libvirtmachines,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=libvirtmachines/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machines;machines/status,verbs=get;list;watch
+// -----------------------------------------------------------------------------
+// RBAC
+// -----------------------------------------------------------------------------
+/*
++kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=libvirtmachines,verbs=get;list;watch;create;update;patch;delete
++kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=libvirtmachines/status,verbs=get;update;patch
++kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machines;machines/status,verbs=get;list;watch
+*/
+
+// -----------------------------------------------------------------------------
+// Reconcile
+// -----------------------------------------------------------------------------
 func (r *LibvirtMachineReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 
+	// 1. InfraMachine
 	var infraMachine infrav1.LibvirtMachine
 	if err := r.Get(ctx, req.NamespacedName, &infraMachine); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
+	// 2. Machine / Cluster
 	machine, err := util.GetOwnerMachine(ctx, r.Client, infraMachine.ObjectMeta)
 	if err != nil || machine == nil {
 		return ctrl.Result{}, err
@@ -51,11 +63,13 @@ func (r *LibvirtMachineReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, nil
 	}
 
+	// 3. InfraCluster
 	var infraCluster infrav1.LibvirtCluster
 	if err := r.Get(ctx, client.ObjectKey{Name: cluster.Name, Namespace: cluster.Namespace}, &infraCluster); err != nil {
 		return ctrl.Result{}, err
 	}
 
+	// 4. Finalizer
 	if !controllerutil.ContainsFinalizer(&infraMachine, LibvirtMachineFinalizer) {
 		controllerutil.AddFinalizer(&infraMachine, LibvirtMachineFinalizer)
 		if err := r.Update(ctx, &infraMachine); err != nil {
@@ -63,6 +77,7 @@ func (r *LibvirtMachineReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		}
 	}
 
+	// 5. delete
 	if !infraMachine.DeletionTimestamp.IsZero() {
 		_ = r.deleteLibvirtVM(ctx, &infraMachine, &infraCluster)
 		controllerutil.RemoveFinalizer(&infraMachine, LibvirtMachineFinalizer)
@@ -70,29 +85,29 @@ func (r *LibvirtMachineReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 		return ctrl.Result{}, nil
 	}
 
+	// 6. wait Cluster ready
 	if !cluster.Status.InfrastructureReady || machine.Spec.Bootstrap.DataSecretName == nil {
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
 
-	// create VM get ProviderID
+	// 7. create VM
 	if infraMachine.Spec.ProviderID == nil {
 		uuid, err := r.createLibvirtVM(ctx, &infraMachine, &infraCluster)
 		if err != nil {
-			machineLog.Error(err, "failed to create Libvirt VM")
+			machineLog.Error(err, "create VM failed")
 			return ctrl.Result{RequeueAfter: 30 * time.Second}, err
 		}
 		providerID := fmt.Sprintf("libvirt://%s", uuid)
 		infraMachine.Spec.ProviderID = &providerID
 		if err := r.Update(ctx, &infraMachine); err != nil {
-			machineLog.Error(err, "failed to update providerID")
 			return ctrl.Result{}, err
 		}
 	}
 
+	// 8. 標記 Ready
 	if !infraMachine.Status.Ready {
 		infraMachine.Status.Ready = true
 		if err := r.Status().Update(ctx, &infraMachine); err != nil {
-			machineLog.Error(err, "failed to update machine status")
 			return ctrl.Result{}, err
 		}
 	}
@@ -100,7 +115,10 @@ func (r *LibvirtMachineReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	return ctrl.Result{RequeueAfter: 2 * time.Minute}, nil
 }
 
-func (r *LibvirtMachineReconciler) createLibvirtVM(ctx context.Context, m *infrav1.LibvirtMachine, c *infrav1.LibvirtCluster) (string, error) {
+// -----------------------------------------------------------------------------
+// create VM
+// -----------------------------------------------------------------------------
+func (r *LibvirtMachineReconciler) createLibvirtVM(_ context.Context, m *infrav1.LibvirtMachine, c *infrav1.LibvirtCluster) (string, error) {
 	if c.Spec.URI == nil {
 		return "", fmt.Errorf("cluster.spec.uri is nil")
 	}
@@ -108,20 +126,26 @@ func (r *LibvirtMachineReconciler) createLibvirtVM(ctx context.Context, m *infra
 		return "", fmt.Errorf("machine.spec.image is nil")
 	}
 
-    // use cluster URI
-	uri := strings.TrimSpace(*c.Spec.URI)
-	conn, err := libvirt.NewConnect(uri)
-    if err != nil {
-        return "", fmt.Errorf("libvirt connect (%s): %w", uri, err)
-    }
-    defer conn.Close()
+	netw, addr, err := dialInfoFromURI(strings.TrimSpace(*c.Spec.URI))
+	if err != nil {
+		return "", err
+	}
+	conn, err := net.DialTimeout(netw, addr, 5*time.Second)
+	if err != nil {
+		return "", err
+	}
+	l := libvirt.New(conn)
+	if err := l.Connect(); err != nil {
+		return "", err
+	}
+	defer l.Disconnect()
 
 	if m.Spec.Network == nil {
-		nw := "default"
-		m.Spec.Network = &nw
+		def := "default"
+		m.Spec.Network = &def
 	}
 
-	domainXML := fmt.Sprintf(`
+	xml := fmt.Sprintf(`
 <domain type='kvm'>
   <name>%s</name>
   <memory unit='MiB'>%d</memory>
@@ -141,81 +165,110 @@ func (r *LibvirtMachineReconciler) createLibvirtVM(ctx context.Context, m *infra
   </devices>
 </domain>`, m.Name, m.Spec.MemoryMiB, m.Spec.CPU, *m.Spec.Image, *m.Spec.Network)
 
-	dom, err := conn.DomainDefineXML(domainXML)
+	dom, err := l.DomainDefineXML(xml)
 	if err != nil {
-		return "", fmt.Errorf("DomainDefineXML: %w", err)
+		return "", err
 	}
-	if err := dom.Create(); err != nil {
-		return "", fmt.Errorf("DomainCreate: %w", err)
+	if err := l.DomainCreate(dom); err != nil {
+		return "", err
 	}
-	uuid, _ := dom.GetUUIDString()
-    return uuid, nil
+	return fmt.Sprintf("%x", dom.UUID), nil
 }
 
-func (r *LibvirtMachineReconciler) deleteLibvirtVM(ctx context.Context, m *infrav1.LibvirtMachine, c *infrav1.LibvirtCluster) error {
-	// ------- sanity checks -------
+// -----------------------------------------------------------------------------
+// delete VM（idempotent）
+// -----------------------------------------------------------------------------
+const undefFlags = libvirt.DomainUndefineManagedSave |
+	libvirt.DomainUndefineSnapshotsMetadata |
+	libvirt.DomainUndefineNvram
+
+func (r *LibvirtMachineReconciler) deleteLibvirtVM(_ context.Context, m *infrav1.LibvirtMachine, c *infrav1.LibvirtCluster) error {
 	if c.Spec.URI == nil {
 		return fmt.Errorf("cluster.spec.uri is nil")
 	}
 	if m.Spec.ProviderID == nil && m.Name == "" {
-		return fmt.Errorf("cannot determine domain identity (providerID & name empty)")
+		return fmt.Errorf("no identity (providerID & name empty)")
 	}
 
-	// ------- dial libvirtd -------
-	conn, err := libvirt.NewConnect(strings.TrimSpace(*c.Spec.URI))
-	defer conn.Close()
+	netw, addr, err := dialInfoFromURI(strings.TrimSpace(*c.Spec.URI))
+	if err != nil {
+		return err
+	}
+	conn, err := net.DialTimeout(netw, addr, 5*time.Second)
+	if err != nil {
+		return err
+	}
+	l := libvirt.New(conn)
+	if err := l.Connect(); err != nil {
+		return err
+	}
+	defer l.Disconnect()
 
-	// ------- find the domain -----
-	var dom *libvirt.Domain
+	var dom libvirt.Domain
 	switch {
 	case m.Spec.ProviderID != nil:
-		// providerID "libvirt://<uuid>"
 		uuidStr := strings.TrimPrefix(*m.Spec.ProviderID, "libvirt://")
-		dom, err = conn.LookupDomainByUUIDString(uuidStr)
-	case m.Name != "":
-		dom, err = conn.LookupDomainByName(m.Name)
+		uuidBytes, err2 := uuidStringToBytes(uuidStr)
+		if err2 != nil {
+			return err2
+		}
+		dom, err = l.DomainLookupByUUID(uuidBytes)
+	default:
+		dom, err = l.DomainLookupByName(m.Name)
 	}
 	if err != nil {
-		if lerr, ok := err.(libvirt.Error); ok && lerr.Code == libvirt.ERR_NO_DOMAIN {
-             return nil
-         }
-		return fmt.Errorf("lookup domain: %w", err)
+		if strings.Contains(err.Error(), "domain not found") {
+			return nil
+		}
+		return err
 	}
 
-	// ------- power off (if running) -----
-	if state, _, err := dom.GetState(); err == nil && state == libvirt.DOMAIN_RUNNING {
-        _ = dom.Destroy()
+	state, _, _ := l.DomainGetState(dom, 0)
+	if libvirt.DomainState(state) == libvirt.DomainRunning {
+		_ = l.DomainDestroy(dom)
 	}
-
-	// ------- undefine & detach storage -----
-	if err := dom.UndefineFlags(undefFlags); err != nil {
-        if lerr, ok := err.(libvirt.Error); !ok || lerr.Code != libvirt.ERR_NO_DOMAIN {
-            return fmt.Errorf("undefine domain: %w", err)
-        }
-     
+	if err := l.DomainUndefineFlags(dom, undefFlags); err != nil &&
+		!strings.Contains(err.Error(), "domain not found") {
+		return err
 	}
 	return nil
 }
 
-// func dialInfoFromURI(uri string) (network, address string, err error) {
-// 	// empty or "qemu:///system" = UNIX socket
-// 	if uri == "" || strings.HasPrefix(uri, "qemu:///") {
-// 		return "unix", "/var/run/libvirt/libvirt-sock", nil
-// 	}
+// -----------------------------------------------------------------------------
+// helpers
+// -----------------------------------------------------------------------------
+func dialInfoFromURI(uri string) (network, address string, err error) {
+	if uri == "" || strings.HasPrefix(uri, "qemu:///") {
+		return "unix", "/var/run/libvirt/libvirt-sock", nil
+	}
+	u, err := url.Parse(uri) // 例：qemu+tcp://10.0.0.1:16509/system
+	if err != nil {
+		return "", "", err
+	}
+	host := u.Host
+	if !strings.Contains(host, ":") {
+		host += ":16509"
+	}
+	return "tcp", host, nil
+}
 
-// 	u, err := url.Parse(uri) // e.g. qemu+tcp://172.31.15.143:16509/system
-// 	if err != nil {
-// 		return "", "", err
-// 	}
-// 	host := u.Host
-// 	if !strings.Contains(host, ":") {
-// 		host += ":16509"
-// 	}
-// 	return "tcp", host, nil
-// }
+func uuidStringToBytes(s string) ([16]byte, error) {
+    var out [16]byte
+    s = strings.ReplaceAll(s, "-", "")
+    if len(s) != 32 {
+        return out, fmt.Errorf("invalid UUID %q", s)
+    }
+    b, err := hex.DecodeString(s)
+    if err != nil {
+        return out, err
+    }
+    copy(out[:], b)
+    return out, nil
+}
 
 func (r *LibvirtMachineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&infrav1.LibvirtMachine{}).
 		Complete(r)
 }
+
