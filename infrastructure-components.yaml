@@ -465,13 +465,13 @@ metadata:
   name: cluster-api-provider-libvirt-libvirtcluster-admin-role
 rules:
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters
   verbs:
   - '*'
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters/status
   verbs:
@@ -486,7 +486,7 @@ metadata:
   name: cluster-api-provider-libvirt-libvirtcluster-editor-role
 rules:
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters
   verbs:
@@ -498,7 +498,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters/status
   verbs:
@@ -513,7 +513,7 @@ metadata:
   name: cluster-api-provider-libvirt-libvirtcluster-viewer-role
 rules:
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters
   verbs:
@@ -521,7 +521,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters/status
   verbs:
@@ -536,13 +536,13 @@ metadata:
   name: cluster-api-provider-libvirt-libvirtmachine-admin-role
 rules:
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachines
   verbs:
   - '*'
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachines/status
   verbs:
@@ -557,7 +557,7 @@ metadata:
   name: cluster-api-provider-libvirt-libvirtmachine-editor-role
 rules:
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachines
   verbs:
@@ -569,7 +569,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachines/status
   verbs:
@@ -584,7 +584,7 @@ metadata:
   name: cluster-api-provider-libvirt-libvirtmachine-viewer-role
 rules:
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachines
   verbs:
@@ -592,7 +592,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachines/status
   verbs:
@@ -607,13 +607,13 @@ metadata:
   name: cluster-api-provider-libvirt-libvirtmachinetemplate-admin-role
 rules:
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachinetemplates
   verbs:
   - '*'
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachinetemplates/status
   verbs:
@@ -628,7 +628,7 @@ metadata:
   name: cluster-api-provider-libvirt-libvirtmachinetemplate-editor-role
 rules:
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachinetemplates
   verbs:
@@ -640,7 +640,7 @@ rules:
   - update
   - watch
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachinetemplates/status
   verbs:
@@ -655,7 +655,7 @@ metadata:
   name: cluster-api-provider-libvirt-libvirtmachinetemplate-viewer-role
 rules:
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachinetemplates
   verbs:
@@ -663,7 +663,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachinetemplates/status
   verbs:
@@ -686,7 +686,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters
   - libvirtmachines
@@ -700,14 +700,14 @@ rules:
   - update
   - watch
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters/finalizers
   - libvirtmachinetemplates/finalizers
   verbs:
   - update
 - apiGroups:
-  - infrastructure.libvirt.io
+  - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters/status
   - libvirtmachines/status
@@ -840,7 +840,7 @@ spec:
         - --health-probe-bind-address=:8081
         command:
         - /manager
-        image: docker.io/jesseyu222/cluster-api-libvirt-controller:v0.1.1
+        image: docker.io/jesseyu222/cluster-api-libvirt-controller:v0.1.2
         livenessProbe:
           httpGet:
             path: /healthz
