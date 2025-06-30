@@ -59,6 +59,7 @@ make deploy IMG=<registry>/cluster-api-libvirt-controller:v0.1.0
 kubectl apply -f examples/demo-cluster.yaml
 
 # 4) Watch it come up
+clusterctl describe cluster -n demo-cluster demo-cluster
 kubectl get clusters -A
 kubectl get machines -A
 virsh list --all                 # on your libvirt host
