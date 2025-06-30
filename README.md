@@ -46,14 +46,14 @@ CAPL turns every libvirt VM into a CAPI‐managed **Machine**, so you can create
 
 ```bash
 # 0) Clone and build/push the controller image
-make docker-buildx IMG=<registry>/capl-controller:v0.1.0
+make docker-buildx IMG=<registry>/cluster-api-libvirt-controller:v0.1.0
 docker push <registry>/capl-controller:v0.1.0     # or use kind-load
 
 # 1) Install CRDs
 make install
 
 # 2) Deploy the controller
-make deploy IMG=<registry>/capl-controller:v0.1.0
+make deploy IMG=<registry>/cluster-api-libvirt-controller:v0.1.0
 
 # 3) Create a workload cluster (edit the samples as needed)
 kubectl apply -f examples/demo-cluster.yaml
