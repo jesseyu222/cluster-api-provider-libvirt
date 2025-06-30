@@ -9,4 +9,4 @@ roleRef:
 subjects:
 - kind: ServiceAccount
   name: controller-manager
-  namespace: cluster-api-provider-libvirt-system
+  namespace: system
