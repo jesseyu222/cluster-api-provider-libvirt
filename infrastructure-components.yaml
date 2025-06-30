@@ -5,16 +5,16 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
     control-plane: controller-manager
-  name: cluster-api-provider-libvirt-system
+  name: capl-system
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: libvirtclusters.infrastructure.cluster.x-k8s.io
   labels:
     cluster.x-k8s.io/v1beta1: v1beta1
+  name: libvirtclusters.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
   names:
@@ -157,9 +157,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: libvirtmachines.infrastructure.cluster.x-k8s.io
   labels:
     cluster.x-k8s.io/v1beta1: v1beta1
+  name: libvirtmachines.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
   names:
@@ -199,29 +199,18 @@ spec:
               virtual machine.
             properties:
               cloudInitSecret:
-                description: CloudInitSecret is a secret name containing user‑data.
                 type: string
               cpu:
-                default: 2
-                description: CPU is the number of vCPUs.
                 format: int32
-                minimum: 1
                 type: integer
               image:
-                description: Image is the QCOW2/RAW image to boot from.
                 type: string
               memoryMiB:
-                default: 2048
-                description: MemoryMiB is RAM in MiB.
                 format: int32
-                minimum: 512
                 type: integer
               network:
-                description: Network is the libvirt network name to attach.
                 type: string
               providerID:
-                description: 'ProviderID encodes the libvirt domain UUID. Format:
-                  libvirt://<uuid>'
                 type: string
             type: object
           status:
@@ -326,9 +315,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.18.0
-  name: libvirtmachinetemplates.infrastructure.cluster.x-k8s.io
   labels:
     cluster.x-k8s.io/v1beta1: v1beta1
+  name: libvirtmachinetemplates.infrastructure.cluster.x-k8s.io
 spec:
   group: infrastructure.cluster.x-k8s.io
   names:
@@ -377,29 +366,18 @@ spec:
                       Libvirt virtual machine.
                     properties:
                       cloudInitSecret:
-                        description: CloudInitSecret is a secret name containing user‑data.
                         type: string
                       cpu:
-                        default: 2
-                        description: CPU is the number of vCPUs.
                         format: int32
-                        minimum: 1
                         type: integer
                       image:
-                        description: Image is the QCOW2/RAW image to boot from.
                         type: string
                       memoryMiB:
-                        default: 2048
-                        description: MemoryMiB is RAM in MiB.
                         format: int32
-                        minimum: 512
                         type: integer
                       network:
-                        description: Network is the libvirt network name to attach.
                         type: string
                       providerID:
-                        description: 'ProviderID encodes the libvirt domain UUID.
-                          Format: libvirt://<uuid>'
                         type: string
                     type: object
                 type: object
@@ -418,8 +396,8 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-controller-manager
-  namespace: cluster-api-provider-libvirt-system
+  name: capl-controller-manager
+  namespace: capl-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -427,8 +405,8 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-leader-election-role
-  namespace: cluster-api-provider-libvirt-system
+  name: capl-leader-election-role
+  namespace: capl-system
 rules:
 - apiGroups:
   - ""
@@ -468,16 +446,16 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-libvirtcluster-admin-role
+  name: capl-libvirtcluster-admin-role
 rules:
 - apiGroups:
-  - infrastructure.cluster.x-k8s.io
+  - infrastructure.libvirt.io
   resources:
   - libvirtclusters
   verbs:
   - '*'
 - apiGroups:
-  - infrastructure.cluster.x-k8s.io
+  - infrastructure.libvirt.io
   resources:
   - libvirtclusters/status
   verbs:
@@ -489,7 +467,7 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-libvirtcluster-editor-role
+  name: capl-libvirtcluster-editor-role
 rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
@@ -516,7 +494,7 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-libvirtcluster-viewer-role
+  name: capl-libvirtcluster-viewer-role
 rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
@@ -539,7 +517,7 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-libvirtmachine-admin-role
+  name: capl-libvirtmachine-admin-role
 rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
@@ -548,7 +526,7 @@ rules:
   verbs:
   - '*'
 - apiGroups:
-  - infrastructure.cluster.x-k8s.io
+  - iinfrastructure.cluster.x-k8s.io
   resources:
   - libvirtmachines/status
   verbs:
@@ -560,7 +538,7 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-libvirtmachine-editor-role
+  name: capl-libvirtmachine-editor-role
 rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
@@ -587,7 +565,7 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-libvirtmachine-viewer-role
+  name: capl-libvirtmachine-viewer-role
 rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
@@ -610,7 +588,7 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-libvirtmachinetemplate-admin-role
+  name: capl-libvirtmachinetemplate-admin-role
 rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
@@ -631,7 +609,7 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-libvirtmachinetemplate-editor-role
+  name: capl-libvirtmachinetemplate-editor-role
 rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
@@ -658,7 +636,7 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-libvirtmachinetemplate-viewer-role
+  name: capl-libvirtmachinetemplate-viewer-role
 rules:
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
@@ -678,7 +656,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: cluster-api-provider-libvirt-manager-role
+  name: capl-manager-role
 rules:
 - apiGroups:
   - cluster.x-k8s.io
@@ -709,6 +687,7 @@ rules:
   - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters/finalizers
+  - libvirtmachines/finalizers
   - libvirtmachinetemplates/finalizers
   verbs:
   - update
@@ -726,7 +705,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: cluster-api-provider-libvirt-metrics-auth-role
+  name: capl-metrics-auth-role
 rules:
 - apiGroups:
   - authentication.k8s.io
@@ -744,7 +723,7 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: cluster-api-provider-libvirt-metrics-reader
+  name: capl-metrics-reader
 rules:
 - nonResourceURLs:
   - /metrics
@@ -757,15 +736,15 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-leader-election-rolebinding
-  namespace: cluster-api-provider-libvirt-system
+  name: capl-leader-election-rolebinding
+  namespace: capl-system
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: cluster-api-provider-libvirt-leader-election-role
+  name: capl-leader-election-role
 subjects:
 - kind: ServiceAccount
-  name: cluster-api-provider-libvirt-controller-manager
+  name: controller-manager
   namespace: cluster-api-provider-libvirt-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -774,27 +753,27 @@ metadata:
   labels:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
-  name: cluster-api-provider-libvirt-manager-rolebinding
+  name: capl-manager-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-api-provider-libvirt-manager-role
+  name: capl-manager-role
 subjects:
 - kind: ServiceAccount
-  name: cluster-api-provider-libvirt-controller-manager
-  namespace: cluster-api-provider-libvirt-system
+  name: capl-controller-manager
+  namespace: capl-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: cluster-api-provider-libvirt-metrics-auth-rolebinding
+  name: capl-metrics-auth-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-api-provider-libvirt-metrics-auth-role
+  name: capl-metrics-auth-role
 subjects:
 - kind: ServiceAccount
-  name: cluster-api-provider-libvirt-controller-manager
+  name: controller-manager
   namespace: cluster-api-provider-libvirt-system
 ---
 apiVersion: v1
@@ -804,8 +783,8 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
     control-plane: controller-manager
-  name: cluster-api-provider-libvirt-controller-manager-metrics-service
-  namespace: cluster-api-provider-libvirt-system
+  name: capl-controller-manager-metrics-service
+  namespace: capl-system
 spec:
   ports:
   - name: https
@@ -823,8 +802,8 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/name: cluster-api-provider-libvirt
     control-plane: controller-manager
-  name: cluster-api-provider-libvirt-controller-manager
-  namespace: cluster-api-provider-libvirt-system
+  name: capl-controller-manager
+  namespace: capl-system
 spec:
   replicas: 1
   selector:
@@ -874,10 +853,12 @@ spec:
             drop:
             - ALL
         volumeMounts: []
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
       securityContext:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-      serviceAccountName: cluster-api-provider-libvirt-controller-manager
+      serviceAccountName: capl-controller-manager
       terminationGracePeriodSeconds: 10
       volumes: []

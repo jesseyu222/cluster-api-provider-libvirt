@@ -32,3 +32,4 @@ resources:
 - libvirtcluster_editor_role.yaml
 - libvirtcluster_viewer_role.yaml
 
+

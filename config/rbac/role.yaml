@@ -9,6 +9,8 @@ rules:
   resources:
   - clusters
   - clusters/status
+  - machines
+  - machines/status
   verbs:
   - get
   - list
@@ -17,6 +19,7 @@ rules:
   - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters
+  - libvirtmachines
   - libvirtmachinetemplates
   verbs:
   - create
@@ -30,6 +33,7 @@ rules:
   - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters/finalizers
+  - libvirtmachines/finalizers
   - libvirtmachinetemplates/finalizers
   verbs:
   - update
@@ -37,6 +41,7 @@ rules:
   - infrastructure.cluster.x-k8s.io
   resources:
   - libvirtclusters/status
+  - libvirtmachines/status
   - libvirtmachinetemplates/status
   verbs:
   - get
