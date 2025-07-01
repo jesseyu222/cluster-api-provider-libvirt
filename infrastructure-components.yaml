@@ -880,3 +880,4 @@ spec:
           path: /var/run/libvirt
           type: Directory
         name: libvirt-sock
+.
