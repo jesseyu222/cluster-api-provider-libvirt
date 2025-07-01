@@ -38,7 +38,7 @@ type LibvirtMachineReconciler struct {
 // -----------------------------------------------------------------------------
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=libvirtmachines,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=libvirtmachines/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=libvirtclusters,verbs=get;list;watch
+// +kubebuilder:rbac:groups=infrastructure.cluster.x-k8s.io,resources=libvirtclusters/status,verbs=get;list;watch
 // +kubebuilder:rbac:groups=cluster.x-k8s.io,resources=machines;machines/status,verbs=get;list;watch
 
 
@@ -71,6 +71,7 @@ func (r *LibvirtMachineReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if infraRef == nil || infraRef.Kind != "LibvirtCluster" {
 		return ctrl.Result{}, fmt.Errorf("cluster %s has no LibvirtCluster reference", cluster.Name)
 	}
+
 	// namespace in the ref can be empty → default to cluster namespace
 	ns := infraRef.Namespace
 	if ns == "" {
